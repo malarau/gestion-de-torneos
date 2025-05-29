@@ -1,0 +1,10 @@
+flask
+flask-sqlalchemy
+psycopg2-binary
+flask-login
+flask-wtf
+WTForms
+# load the .env file
+python-dotenv
+# For production use
+waitress
