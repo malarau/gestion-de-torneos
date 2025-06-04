@@ -106,7 +106,7 @@ Como administrador, quiero crear actividades deportivas o recreativas en el sist
 **CRITERIOS DE ACEPTACIÓN**  
 **PH: 3**
 1. El administrador puede acceder a un formulario para crear nuevas actividades  
-2. Debe poder ingresar nombre, descripción y categoría de la actividad  
+2. Debe poder ingresar nombre, descripción, número mínimo de jugadores por equipo y categoría de la actividad
 3. Las actividades creadas deben quedar almacenadas y disponibles para selección en la creación de torneos  
 4. Se debe validar que no exista ya una actividad con el mismo nombre  
 
@@ -126,6 +126,8 @@ Como administrador, quiero visualizar, editar y desactivar actividades, para man
 
 Este módulo permite a los organizadores crear y administrar competiciones dentro de sus organizaciones. Los torneos incluyen configuraciones como tipo de actividad, número máximo de equipos, mínimo de participantes por equipo, entre otros parámetros.
 
+> El torneo opera de la siguiente manera: El sistema organiza torneos de eliminación simple mediante un árbol binario completo, donde primero se calcula el tamaño del bracket (potencia de 2 superior al número de equipos) y se asignan *byes* a los mejores semillas para completarlo. Los equipos se ordenan por *seed_score* (mayor = mejor semilla), y los partidos iniciales enfrentan semillas opuestas (mejor vs. peor restante). Cada **Match** incluye los campos: *level* (ronda, siendo 0 la final), *match_number* (posición en el bracket y en el árbol binario, con 1 la raíz, la final), *team_a* y *team_b*, (ids de equipos, opcionales en *byes*), *score_team_a* y *score_team_b* (marcadores), *winner* (determinado al resolverse el partido), *is_bye* (victoria automática) y *status* (*pending* o *completed*). Si es un *bye*, el ganador avanza automáticamente; al registrarse un resultado (mediante un *trigger* que actualice la siguiente llave), el *winner* se asigna al partido correspondiente en la siguiente ronda, repitiéndose el proceso hasta determinar un campeón en la final.
+
 ### N.º 11 - Creación de torneos  
 **HISTORIA**  
 Como organizador, quiero crear torneos dentro de mi organización, para que equipos puedan participar y competir  
@@ -133,7 +135,7 @@ Como organizador, quiero crear torneos dentro de mi organización, para que equi
 **CRITERIOS DE ACEPTACIÓN**  
 **PH: 8**
 1. Solo organizadores pueden crear torneos en sus respectivas organizaciones  
-2. Debe permitir configurar: nombre, descripción, fecha, tipo de actividad (de las previamente creadas), número máximo de equipos participantes, número mínimo de participantes por equipo, premios y evento al que pertenece (si aplica)  
+2. Debe permitir configurar: nombre, descripción, fecha, tipo de actividad (de las previamente creadas), número máximo de equipos participantes, premios y evento al que pertenece (si aplica)  
 3. Los torneos se crean inicialmente en estado "pendiente", pudiendo cambiar a "en juego/iniciado" y finalmente "torneo finalizado"  
 4. Debe permitir asignar al menos un usuario de esa organización como árbitro (que no participe como jugador en el mismo torneo)  
 
@@ -251,7 +253,7 @@ Como usuario autenticado, quiero ser notificado cuando ocurre algo relevante par
 **Criterios de Aceptación**  
 **PH:** 7  
 1. Existe un lugar dentro de la interfaz donde el usuario pueda visualizar que tiene notificaciones no leídas  
-2. Al hacer clic, el usuario accede a un centro de notificaciones donde puede visualizar los detalles y marcar notificaciones como leídas  
+2. Al hacer click, el usuario accede a un centro de notificaciones donde puede visualizar los detalles y marcar notificaciones como leídas  
 3. Se generan notificaciones cuando un usuario es invitado a participar en un equipo  
 4. Se generan notificaciones cuando el torneo en el que participa el usuario cambia de estado (por ejemplo, “iniciado” o “en curso”)  
 
@@ -313,7 +315,6 @@ Como usuario, quiero acceder al sistema desde dispositivos móviles y escritorio
 1. Todos los componentes de la interfaz deben adaptarse correctamente a diferentes tamaños de pantalla  
 2. El sistema debe ser completamente funcional tanto en dispositivos móviles como en escritorio  
 
-
 ---
 
 ## MÓDULO 9: Gestión de partidas
@@ -373,3 +374,66 @@ Como árbitro de un torneo, quiero poder editar el resultado de una partida, sie
 3. Interfaz de edición muestra los valores actuales (resultado y mejor jugador)
 4. Valida los nuevos datos con los mismos criterios que el registro inicial
 5. El nuevo resultado sustituye el anterior y actualiza el bracket automáticamente. Además, actualiza el mejor jugador si fue modificado
+
+# Módulo 10: Gestión de Eventos
+
+Este módulo permite agrupar torneos bajo eventos macro (ej: "Copa Mechona 2026") para organización jerárquica. Los organizadores pueden crear/editar eventos y asociar torneos, mientras los usuarios visualizan torneos agrupados.
+
+## N.º 27 - Creación de eventos
+**Historia**  
+Como organizador quiero crear eventos en mi organización para agrupar torneos relacionados.
+
+**Criterios de Aceptación**  
+**PH: 5**  
+1. Acceso desde dashboard de organizador con un rol válido (organizador)  
+2. Formulario con campos obligatorios, como nombre (único en la organización) y fechas de inicio y fin y una descripción
+3. Se debe validar que el nombre no repetido y que la fecha de fin sea posterior al inicio
+4. Debe persistir en BD con estado "activo" por defecto
+5. Confirmación visual con redirección a listado
+
+## N.º 28 - Edición de eventos
+**Historia**  
+Como organizador quiero modificar eventos existentes para corregir datos o actualizar información.
+
+**Criterios de Aceptación**  
+**PH: 4**  
+1. Edición permitida solo para organizadores de la misma organización
+2. Debe permitir editar todos los campos
+3. Debe validar que las fechas sean coherentes
+
+## N.º 29 - Desactivación de eventos
+**Historia**  
+Como organizador quiero desactivar eventos obsoletos para mantener limpio el sistema sin perder datos históricos.
+
+**Criterios de Aceptación**  
+**PH: 3**  
+1. Al desactivar un torneo, cambia su estado a "inactivo"
+2. Al desactivar ya no es posible usar el evento en un torneo pero mantiene relación con torneos asociados anteriormente
+
+## N.º 30 - Listado de eventos
+**Historia**  
+Como usuario quiero ver todos los eventos de mi organización para identificar rápidamente torneos asociados.
+
+**Criterios de Aceptación**  
+**PH: 4**  
+1. Vista de listado de evento, incluyendo el nombre y ordenados por fecha
+2. Se debe permitir seleccionar uno para revisar el detalle del mismo o editar en caso de organizadores
+
+## N.º 31 - Asociación de torneos
+**Historia**  
+Como organizador quiero vincular torneos a eventos para agrupar competencias relacionadas.
+
+**Criterios de Aceptación**  
+**PH: 5**  
+1. Al crear un torneo debe existir un selector en creación del torneo, el que solo muestra eventos activos de la misma organización
+2. Solo se permite un evento por torneo
+
+## N.º 32 - Vista de detalle
+**Historia**  
+Como usuario quiero explorar un evento específico para ver todos sus torneos asociados.
+
+**Criterios de Aceptación**  
+**PH: 6**  
+1. Una vez ingresado al detalle del evento, muestra su detalle, como el nombre, la descripción y las fechas, además del listado de torneos asociados
+2. Permite la busqueda de torneos
+3. Permite ingresar a la vista de detalle de torneo si se presiona uno

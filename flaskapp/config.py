@@ -12,6 +12,9 @@ class BaseConfig:
 class DevelopmentConfig(BaseConfig):
     """Configuration for local development (SQLite)"""
     BASE_DIR = Path(__file__).parent
+    # Ensure the database directory exists
+    if not (BASE_DIR / 'database').exists():
+        (BASE_DIR / 'database').mkdir(parents=True)
     # Creates `dev.db` in flaskapp directory
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR / 'database' / 'dev.db'}" 
     DEBUG = True  # Enable debug mode for development
