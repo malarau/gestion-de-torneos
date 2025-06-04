@@ -1,6 +1,5 @@
 Aquí está la información estructurada en formato markdown para añadir al README.db.md:
 
-```markdown
 # Base de Datos - Modelo Relacional
 
 ## Tablas
