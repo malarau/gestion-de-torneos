@@ -10,7 +10,7 @@ python -m venv .venv
 .venv\Scripts\activate
 
 # Once the venv if active, install the requirements
-.venv\Scripts\pip.exe install -r requirements.txt
+.venv\Scripts\pip.exe install -r flaskapp\requirements.txt
 ```
 
 2. **Create a .env file**:

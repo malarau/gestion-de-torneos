@@ -4,10 +4,10 @@ from flask_login import (
     login_user,
     logout_user
 )
-from flaskapp import db
+from flaskapp.database.models import db
 from flaskapp import login_manager
 from flaskapp.modules.authentication.forms import LoginForm, CreateAccountForm
-from flaskapp.modules.authentication.models import Users
+from flaskapp.database.models import User
 from flaskapp.modules.authentication.util import verify_pass
 
 auth_blueprint = Blueprint(
@@ -29,11 +29,11 @@ def login():
     if 'login' in request.form:
 
         # read form data
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
 
         # Locate user
-        user = Users.query.filter_by(username=username).first()
+        user = User.query.filter_by(email=email).first()
 
         # Check the password
         if user and verify_pass(password, user.password):
@@ -61,7 +61,7 @@ def register():
         email = request.form['email']
 
         # Check usename exists
-        user = Users.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
         if user:
             return render_template('authentication/register.html',
                                    msg='Username already registered',
@@ -69,7 +69,7 @@ def register():
                                    form=create_account_form)
 
         # Check email exists
-        user = Users.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
         if user:
             return render_template('authentication/register.html',
                                    msg='Email already registered',
@@ -77,7 +77,7 @@ def register():
                                    form=create_account_form)
 
         # else we can create the user
-        user = Users(**request.form)
+        user = User(**request.form)
         
         # Get a database session
         db.session.add(user)

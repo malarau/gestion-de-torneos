@@ -164,12 +164,6 @@ Como organizador, quiero iniciar el torneo, para que el sistema genere automáti
 6. Se notifica a los participantes del inicio del torneo  
 7. Solo se incluyen en el torneo los equipos que cumplen con el requisito de integrantes  
 
-## MÓDULO 4: Gestión de torneos
-
-Este módulo permite a los organizadores crear y administrar competiciones dentro de sus organizaciones. Los torneos incluyen configuraciones como tipo de actividad, número máximo de equipos, mínimo de participantes por equipo, entre otros parámetros.
-
----
-
 ### N.º 14 - Virtualización del bracket del torneo  
 **Historia:**  
 Como usuario perteneciente a la organización, quiero visualizar el bracket del torneo de eliminación directa, para seguir el progreso de las competencias  

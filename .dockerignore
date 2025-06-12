@@ -5,3 +5,15 @@ __pycache__
 *.pyd
 .venv
 /instance
+tests
+.env_example
+
+.gitignore
+docker-compose.dev.yml
+docker-compose.prod.yml
+Dockerfile
+README.md
+README.dev.md
+README.db.md
+README.HU.md
+

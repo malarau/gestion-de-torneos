@@ -7,6 +7,8 @@ from flask import render_template, request, Blueprint
 from flask_login import login_required
 from jinja2 import TemplateNotFound
 
+from flaskapp.modules.home.service import DashboardService
+
 
 home_blueprint = Blueprint(
     'home_blueprint',
@@ -18,7 +20,10 @@ home_blueprint = Blueprint(
 @login_required
 def index():
 
-    return render_template('home/index.html', segment='index')
+    stats = DashboardService.get_dashboard_stats()
+    print("\n\n\n*****Dashboard stats:\n", stats)
+
+    return render_template('home/index.html', segment='index', stats=stats)
 
 
 @home_blueprint.route('/<template>')

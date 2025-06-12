@@ -24,27 +24,34 @@ This keeps code **modular** and **secure**.
 
 ### Example Structure:
 ```
-your-app/  
-├── app.py                  # Entry point  
+flaskapp/  
+├── __init__.py                  # Entry point  
+├── database/                    # Database models and core logic
+│   ├── models.py                # All SQLAlchemy models in one place
+│   └── ...                      
 ├── modules/  
-│   ├── user/              # Blueprint: user management  
-│   │   ├── routes.py      # URL endpoints (e.g., /login, /profile)  
-│   │   ├── forms.py       # Forms & validation  
-│   │   └── service.py     # Database interactions & logic  
-│   ├── tournament/        # Blueprint: tournaments  
+│   ├── organization/       # Blueprint: org management  
+│   │   ├── routes.py       # URL endpoints (e.g., /login, /profile)  
+│   │   ├── forms.py        # Forms & validation  
+│   │   ├── service.py      # Business logic (uses database/models.py)  
+│   │   ├── dto.py          # Data transfer objects for views (uses database/models.py)  
+│   │   └── utils.py        # Others
+│   ├── tournament/         # Blueprint: tournaments 
 │   │   ├── routes.py  
 │   │   ├── forms.py  
-│   │   └── service.py  
+│   │   ├── service.py  
+│   │   ├── dto.py          
+│   │   └── utils.py       
 │   └── ...  
 ├── templates/             # HTML templates  
 ├── static/                # CSS/JS/images  
-└── requirements.txt  
+requirements.txt  
+...
 ```
 
-### How Blueprints Work:  
-Here's the improved, more pedagogical version with clear explanations for each part:
+All models are centralized in database/models.py
 
----
+### How Blueprints Work:  
 
 #### **1. Defining a Blueprint (routes.py)**  
 

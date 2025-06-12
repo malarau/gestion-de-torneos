@@ -1,0 +1,235 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Organizaciones {% endblock title %}
+
+{% block content %}
+
+  <div class="header bg-primary pb-6">
+    <div class="container-fluid">
+      <div class="header-body">
+        <div class="row align-items-center py-4">
+          <div class="col-lg-6 col-7">
+            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+              <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                <li class="breadcrumb-item"><a href="#">Tables</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tables</li>
+              </ol>
+            </nav>
+          </div>
+          <div class="col-lg-6 col-5 text-right">
+            <a href="#" class="btn btn-sm btn-neutral">New</a>
+            <a href="#" class="btn btn-sm btn-neutral">Filters</a>
+          </div>
+        </div>
+
+        <!-- Error msg -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+      </div>
+    </div>
+  </div>
+  
+  <!-- Page content -->
+  <div class="container-fluid mt--6">
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <!-- Card header -->
+          <div class="card-header border-0">
+            <h3 class="mb-0">Mis organizaciones</h3>
+          </div>
+          <!-- Light table -->
+          <div class="table-responsive">
+            <table class="table align-items-center table-flush">
+              <thead class="thead-light">
+                <tr>
+                  <th scope="col" class="sort" data-sort="name">Organización</th>
+                  <th scope="col" class="sort" data-sort="name">Usuarios</th>
+                  <th scope="col" class="sort" data-sort="name">Descripción</th>
+                  <th scope="col" class="sort" data-sort="status">Organizador</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody class="list">
+                {% for org in org_data.my_organizations %}
+                <tr>
+                  <th scope="row">
+                    <div class="media align-items-center">
+                      <a href="#" class="avatar rounded-circle mr-3">
+                        <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: #7f6fc7;">
+                          <i class="fa-solid fa-sitemap" style="color: white;"></i>
+                        </div>
+                      </a>
+                      <div class="media-body">
+                        <span class="name mb-0 text-sm">{{ org.name }}</span>
+                        <div class="text-muted text-xs">Creada: {{ org.created_at }}</div>
+                      </div>
+                    </div>
+                  </th>
+                  <td>
+                    {{ org.member_count }}
+                  </td>
+                  <td>
+                    <span class="badge badge-dot mr-4">
+                      {{ org.description }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if org.is_organizer %}
+                    <span class="badge badge-success">
+                      <i class="fa-solid fa-check"></i>
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-right">
+                    <div class="dropdown">
+                      <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}">Visitar</a>
+                        {% if org.is_organizer %}
+                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.settings', organization_id=org.id) }}">Editar</a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <!-- Card footer -->
+          <div class="card-footer py-4">
+            <nav aria-label="...">
+              <ul class="pagination justify-content-end mb-0">
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">
+                    <i class="fas fa-angle-left"></i>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                </li>
+                <li class="page-item active">
+                  <a class="page-link" href="#">1</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                  <a class="page-link" href="#">
+                    <i class="fas fa-angle-right"></i>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Dark table -->
+    <div class="row">
+      <div class="col">
+        <div class="card bg-default shadow">
+          <div class="card-header bg-transparent border-0">
+            <h3 class="text-white mb-0">Otras organizaciones</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-items-center table-dark table-flush">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col" class="sort" data-sort="name">Organización</th>
+                  <th scope="col" class="sort" data-sort="budget">Usuarios</th>
+                  <th scope="col" class="sort" data-sort="status">Descripción</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody class="list">
+                {% for org in org_data.other_organizations %}
+                <tr>
+                  <th scope="row">
+                    <div class="media align-items-center">
+                      <a href="#" class="avatar rounded-circle mr-3">
+                        <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: white;">
+                          <i class="fa-solid fa-sitemap" style="color: #7f6fc7;"></i>
+                        </div>
+                      </a>
+                      <div class="media-body">
+                        <span class="name mb-0 text-sm">{{ org.name }}</span>
+                        <div class="text-muted text-xs">Creada: {{ org.created_at }}</div>
+                      </div>
+                    </div>
+                  </th>
+                  <td>
+                    {{ org.member_count }}
+                  </td>
+                  <td>
+                    <span class="badge badge-dot mr-4">
+                      {{ org.description }}
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <div class="dropdown">
+                      <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                        <form method="POST" action="{{ url_for('organizations_blueprint.join', organization_id=org.id) }}">
+                          <button class="dropdown-item" type="submit" {% if not current_user.is_authenticated %}disabled title="Debes iniciar sesión"{% endif %}>Unirse</button>
+                        </form>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <!-- Card footer -->
+          <div class="card-footer py-4">
+            <nav aria-label="...">
+              <ul class="pagination justify-content-end mb-0">
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1">
+                    <i class="fas fa-angle-left"></i>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                </li>
+                <li class="page-item active">
+                  <a class="page-link" href="#">1</a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                  <a class="page-link" href="#">
+                    <i class="fas fa-angle-right"></i>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    {% include "includes/footer.html" %}
+
+  </div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}

@@ -8,12 +8,17 @@ var SalesChart = (function() {
 
   // Variables
 
-  var $chart = $('#chart-sales-dark');
+  var $chart = $('#chart-users-last-6-months');
 
 
   // Methods
 
   function init($chart) {
+
+    // Print usersLast6Months 
+    console.log(usersLast6Months);
+    console.log(labels);
+
 
     var salesChart = new Chart($chart, {
       type: 'line',
@@ -28,7 +33,7 @@ var SalesChart = (function() {
             ticks: {
               callback: function(value) {
                 if (!(value % 10)) {
-                  return '$' + value + 'k';
+                  return value;
                 }
               }
             }
@@ -42,20 +47,20 @@ var SalesChart = (function() {
               var content = '';
 
               if (data.datasets.length > 1) {
-                content += '<span class="popover-body-label mr-auto">' + label + '</span>';
+                content += label + ': ';
               }
 
-              content += '<span class="popover-body-value">$' + yLabel + 'k</span>';
+              content += ' ' + yLabel + ' nuevos usuarios';
               return content;
             }
           }
         }
       },
       data: {
-        labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: typeof labels !== 'undefined' ? labels : [],
         datasets: [{
-          label: 'Performance',
-          data: [0, 20, 10, 30, 15, 40, 20, 60, 60]
+          label: 'Usuarios/Meses',
+          data: typeof usersLast6Months !== 'undefined' ? usersLast6Months : []
         }]
       }
     });

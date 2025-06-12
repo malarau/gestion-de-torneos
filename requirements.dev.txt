@@ -4,12 +4,10 @@ psycopg2-binary
 flask-login
 flask-wtf
 WTForms
-# utils
-python-dateutil
 # load the .env file
 python-dotenv
 # For production use
 waitress
 # Testing
 bcrypt
-faker
+faker 
