@@ -4,11 +4,12 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from flask import render_template, request, Blueprint
-from flask_login import login_required
+from flask_login import current_user, login_required
 from jinja2 import TemplateNotFound
 
 from flaskapp.modules.home.service import DashboardService
 
+from flaskapp.database.models import db
 
 home_blueprint = Blueprint(
     'home_blueprint',
@@ -19,10 +20,7 @@ home_blueprint = Blueprint(
 @home_blueprint.route('/index')
 @login_required
 def index():
-
     stats = DashboardService.get_dashboard_stats()
-    print("\n\n\n*****Dashboard stats:\n", stats)
-
     return render_template('home/index.html', segment='index', stats=stats)
 
 

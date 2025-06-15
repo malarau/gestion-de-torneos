@@ -1,0 +1,113 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Profile {% endblock title %}
+
+{% block content %}
+
+<div class="header d-flex align-items-center" 
+     style="min-height: 300px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-default opacity-8"></span>
+  <!-- Header container -->
+
+</div>
+<!-- Page content -->
+<div class="container-fluid mt--8">
+  
+  <div class="row">
+    <!-- Columna derecha - Tarjeta de perfil -->
+    <div class="col-xl-4 order-xl-2">
+      <div class="card card-profile">
+        <img src="/static/assets/img/theme/img-1-1000x600.jpg" alt="Header" class="card-img-top">
+        <div class="row justify-content-center">
+          <div class="col-lg-3 order-lg-2">
+            <div class="card-profile-image">
+              <img src="{{ profile.profile_picture }}" class="rounded-circle">
+            </div>
+          </div>
+        </div>
+        <div class="card-body pt-6">
+          <div class="text-center">
+            <h5 class="h3">{{ profile.name }}</h5>
+            <div class="h5 font-weight-300">{{ profile.email }}</div>
+            <div class="h5 mt-4">
+              <i class="ni business_briefcase-24 mr-2"></i>Usuario desde:
+            </div>
+            <div>
+              <i class="ni education_hat mr-2"></i>{{ profile.created_at }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna izquierda - Contenido principal -->
+    <div class="col-xl-8 order-xl-1">
+      {% if form %}
+      <!-- Formulario de edición (solo para perfil propio) -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0">Editar perfil</h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="pl-lg-4">
+              <div class="row">
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    {{ form.name.label(class="form-control-label") }}
+                    {{ form.name(class="form-control") }}
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <div class="form-group">
+                    {{ form.email.label(class="form-control-label") }}
+                    {{ form.email(class="form-control", placeholder="Email") }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Organizaciones en común -->
+      {% if profile.common_organizations %}
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Organizaciones en común</h3>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            {% for org in profile.common_organizations %}
+            <a href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}" 
+               class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between">
+                <span>{{ org.name }}</span>
+                {% if org.is_organizer %}
+                <span class="badge badge-primary">Organizador</span>
+                {% endif %}
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}{% endblock javascripts %}

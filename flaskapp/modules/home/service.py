@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from sqlalchemy import func, and_
+from sqlalchemy import and_
 from flaskapp.database.models import db, User, Organization, Tournament, Team
 from flaskapp.modules.home.dto import DashboardStatsDTO
 from flaskapp.modules.home.utils import TimeLabelGenerator

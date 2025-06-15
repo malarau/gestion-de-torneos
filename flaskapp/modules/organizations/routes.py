@@ -1,11 +1,14 @@
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required, current_user
+from flaskapp.database.models import Organization
 from flaskapp.modules.auth.decorators import (
     admin_required, 
-    organization_member_required, 
-    organization_organizer_required
+    organization_member_required
 )
+from flaskapp.modules.organizations.forms import OrganizationForm
 from flaskapp.modules.organizations.service import OrganizationService
+
+from flaskapp.database.models import db
 
 org_bp = Blueprint(
     'organizations_blueprint',
@@ -17,31 +20,88 @@ org_bp = Blueprint(
 @login_required
 def index():
     """Página principal de organizaciones"""
-    org_data = OrganizationService.get_organization_groups()
-    print("\n\n\n*****Organization groups data:\n", org_data, flush=True)
-    
-    return render_template('organizations/index.html', org_data=org_data)
+    my_orgs, other_orgs = OrganizationService.get_organization_groups()
 
-@org_bp.route('/create')
+    print(f"\n{my_orgs=}", flush=True)
+    # print is admin
+    print(f"{current_user.is_admin=}", flush=True)
+    return render_template(
+        'organizations/index.html',
+        my_orgs=my_orgs,
+        other_orgs=other_orgs,
+        segment='Organizaciones'
+    )
+
+@org_bp.route('/manage/', methods=['GET', 'POST'])
+@org_bp.route('/manage/<int:organization_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def create_organization():
-    """Solo admins pueden crear organizaciones"""
-    return render_template('organizations/create.html')
+def manage_organization(organization_id=None):
+    # Manejar creación/edición de organización
+    form = OrganizationForm()
+    org = None
+    
+    if organization_id:
+        org = Organization.query.get_or_404(organization_id)
+        form = OrganizationForm(obj=org)
 
-@org_bp.route('/<int:organization_id>/settings')
-@login_required
-@organization_organizer_required()
-def settings(organization_id):
-    """Solo organizadores pueden acceder a configuración"""
-    return render_template('organization/settings.html')
+    # Manejar búsqueda y gestión de organizadores (solo en edición)
+    members = []
+    search_query = ''
+    if organization_id:
+        search_query = request.args.get('search', '')
+        members = OrganizationService.get_organization_members(organization_id, search_query)
+        
+        # Manejar cambio de rol de organizador
+        if 'toggle_organizer' in request.args:
+            try:
+                OrganizationService.toggle_organizer(
+                    int(request.args['toggle_organizer']),
+                    organization_id
+                )
+                flash('Rol de organizador actualizado', 'success')
+                return redirect(url_for('organizations_blueprint.manage_organization', 
+                                    organization_id=organization_id,
+                                    search=search_query))
+            except ValueError as e:
+                flash(str(e), 'danger')
+                db.session.rollback()
+
+    # Manejar envío del formulario principal
+    if form.validate_on_submit():
+        try:
+            OrganizationService.create_or_update_organization(
+                form.data,
+                organization_id=organization_id,
+                creator_id=current_user.id
+            )
+            flash('Organización guardada exitosamente', 'success')
+            return redirect(url_for('organizations_blueprint.index'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al guardar: {str(e)}', 'danger')
+
+    return render_template(
+        'organizations/manage.html',
+        form=form,
+        organization=org,
+        is_edit=organization_id is not None,
+        members=members,
+        search_query=search_query,
+        segment='Organizaciones'
+    )
 
 @org_bp.route('/<int:organization_id>')
 @login_required
 @organization_member_required()
 def detail(organization_id):
     """Solo miembros pueden ver detalles de la organización"""
-    return render_template('organizations/detail.html')
+    org_details = OrganizationService.get_organization_details(organization_id, current_user.id)
+    return render_template(
+        'organizations/detail.html',
+        org=org_details,
+        segment='Organizaciones'
+    )
 
 
 @org_bp.route('/join/<int:organization_id>', methods=['POST'])

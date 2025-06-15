@@ -15,7 +15,7 @@ from flaskapp.database.models import (
 
 # Configuración inicial
 fake = Faker('es_CL')
-NUM_USERS = 400
+NUM_USERS = 669
 NUM_ORGANIZATIONS = 18
 NUM_ACTIVITIES = 5
 PASSWORD = "password1" # Contraseña común para desarrollo
@@ -122,11 +122,20 @@ def create_users(num_users):
     
     for i in range(1, num_users + 1):
         is_admin = i <= 5 # Los primeros 5 son administradores
+
+        # Nombre y foto de perfil según el género
+        if i % 2 == 0:
+            f_name = fake.name_female()
+            f_profile_pic = f"https://randomuser.me/api/portraits/women/{i % 100}.jpg"
+        else:
+            f_name = fake.name_male()
+            f_profile_pic = f"https://randomuser.me/api/portraits/mans/{i % 100}.jpg"
+            
         user = User(
-            name=fake.name(),
+            name=f_name,
             email=f"usuario{i}@{fake.domain_name()}",
             password=PASSWORD,
-            profile_picture=f"https://randomuser.me/api/portraits/{'men' if i % 2 else 'women'}/{i % 100}.jpg",
+            profile_picture=f_profile_pic,
             is_admin=is_admin,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         )

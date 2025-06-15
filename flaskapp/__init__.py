@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager
 from flaskapp.database.models import db
 import os
@@ -10,14 +10,33 @@ def register_blueprints(app):
     from flaskapp.modules.authentication.routes import auth_blueprint 
     from flaskapp.modules.home.routes import home_blueprint
     from flaskapp.modules.organizations.routes import org_bp
+    from flaskapp.modules.profile.routes import profile_blueprint
+    from flaskapp.modules.activities.routes import activities_blueprint
+    from flaskapp.modules.events.routes import events_bp
 
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(home_blueprint)
     app.register_blueprint(org_bp)
+    app.register_blueprint(profile_blueprint)
+    app.register_blueprint(activities_blueprint)
+    app.register_blueprint(events_bp)
+    
+
+    # Add global blueprints as needed
+    @app.errorhandler(403)
+    def access_forbidden(error, msg=None):
+        return render_template('home/page-403.html', msg=msg), 403
+    @app.errorhandler(404)
+    def not_found_error(error, msg=None):
+        return render_template('home/page-404.html', msg=msg), 404
+    @app.errorhandler(500)
+    def internal_error(error, msg=None):
+        return render_template('home/page-500.html', msg=msg), 500
 
 def create_app():
+
     """Create a Flask application."""
-    app = Flask(__name__)
+    app = Flask(__name__)    
     
     # Configuration
     app.config['SECRET_KEY'] = os.urandom(32)

@@ -1,141 +1,135 @@
 {% extends 'layouts/base.html' %}
 
 {% block title %} Organizaciones {% endblock title %}
-
-{% block content %}
-
+{% block content %} 
+  
   <div class="header bg-primary pb-6">
     <div class="container-fluid">
       <div class="header-body">
         <div class="row align-items-center py-4">
           <div class="col-lg-6 col-7">
-            <h6 class="h2 text-white d-inline-block mb-0">Tables</h6>
+            <h6 class="h2 text-white d-inline-block mb-0">Organizaciones</h6>
             <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
               <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
                 <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                <li class="breadcrumb-item"><a href="#">Tables</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Tables</li>
+                <li class="breadcrumb-item"><a href="#">Organizaciones</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Inicio</li>
               </ol>
             </nav>
           </div>
           <div class="col-lg-6 col-5 text-right">
-            <a href="#" class="btn btn-sm btn-neutral">New</a>
-            <a href="#" class="btn btn-sm btn-neutral">Filters</a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('organizations_blueprint.manage_organization') }}" class="btn btn-sm btn-neutral">Crear organización</a>
+            {% endif %}
           </div>
         </div>
 
-        <!-- Error msg -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
+      {% include 'includes/flash_messages.html' %}
       </div>
     </div>
   </div>
-  
+
   <!-- Page content -->
   <div class="container-fluid mt--6">
-    <div class="row">
-      <div class="col">
-        <div class="card">
-          <!-- Card header -->
-          <div class="card-header border-0">
-            <h3 class="mb-0">Mis organizaciones</h3>
-          </div>
-          <!-- Light table -->
-          <div class="table-responsive">
-            <table class="table align-items-center table-flush">
-              <thead class="thead-light">
-                <tr>
-                  <th scope="col" class="sort" data-sort="name">Organización</th>
-                  <th scope="col" class="sort" data-sort="name">Usuarios</th>
-                  <th scope="col" class="sort" data-sort="name">Descripción</th>
-                  <th scope="col" class="sort" data-sort="status">Organizador</th>
-                  <th scope="col"></th>
-                </tr>
-              </thead>
-              <tbody class="list">
-                {% for org in org_data.my_organizations %}
-                <tr>
-                  <th scope="row">
-                    <div class="media align-items-center">
-                      <a href="#" class="avatar rounded-circle mr-3">
-                        <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: #7f6fc7;">
-                          <i class="fa-solid fa-sitemap" style="color: white;"></i>
+    <!-- Check if user is admin -->
+    {% if not current_user.is_admin %}
+      <div class="row">
+        <div class="col">
+          <div class="card">
+            <!-- Card header -->
+            <div class="card-header border-0">
+              <h3 class="mb-0">Mis organizaciones</h3>
+            </div>
+            <!-- Light table -->
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col" class="sort" data-sort="name">Organización</th>
+                    <th scope="col" class="sort" data-sort="name">Usuarios</th>
+                    <th scope="col" class="sort col-md-auto" data-sort="name">Descripción</th>
+                    <th scope="col" class="sort" data-sort="status">Organizador</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody class="list">
+                  {% for org in my_orgs.items %}
+                  <tr>
+                    <th scope="row">
+                      <div class="media align-items-center">
+                        <a href="#" class="avatar rounded-circle mr-3">
+                          <div class="icon icon-shape text-white rounded-circle shadow" style="background-color: #7f6fc7;">
+                            <i class="fa-solid fa-sitemap" style="color: white;"></i>
+                          </div>
+                        </a>
+                        <div class="media-body">
+                          <a href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}"><span class="name mb-0 text-sm">{{ org.name }}</span></a>
+                          <div class="text-muted text-xs">Creada: {{ org.created_at }}</div>
                         </div>
-                      </a>
-                      <div class="media-body">
-                        <span class="name mb-0 text-sm">{{ org.name }}</span>
-                        <div class="text-muted text-xs">Creada: {{ org.created_at }}</div>
                       </div>
-                    </div>
-                  </th>
-                  <td>
-                    {{ org.member_count }}
-                  </td>
-                  <td>
-                    <span class="badge badge-dot mr-4">
-                      {{ org.description }}
-                    </span>
-                  </td>
-                  <td>
-                    {% if org.is_organizer %}
-                    <span class="badge badge-success">
-                      <i class="fa-solid fa-check"></i>
-                    </span>
-                    {% endif %}
-                  </td>
-                  <td class="text-right">
-                    <div class="dropdown">
-                      <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </a>
-                      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
-                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}">Visitar</a>
-                        {% if org.is_organizer %}
-                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.settings', organization_id=org.id) }}">Editar</a>
-                        {% endif %}
+                    </th>
+                    <td>
+                      {{ org.member_count }}
+                    </td>
+                    <td>
+                      <span class="badge badge-dot" style="white-space: normal; white-space: normal; display: inline-block;">
+                        {{ org.description }}
+                      </span>
+                    </td>
+                    <td>
+                      {% if org.is_organizer %}
+                      <span class="badge badge-success">
+                        <i class="fa-solid fa-check"></i>
+                      </span>
+                      {% endif %}
+                    </td>
+                    <td class="text-right">
+                      <div class="dropdown">
+                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                          <a class="dropdown-item" href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}">Visitar</a>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <!-- Card footer -->
-          <div class="card-footer py-4">
-            <nav aria-label="...">
-              <ul class="pagination justify-content-end mb-0">
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" tabindex="-1">
-                    <i class="fas fa-angle-left"></i>
-                    <span class="sr-only">Previous</span>
-                  </a>
-                </li>
-                <li class="page-item active">
-                  <a class="page-link" href="#">1</a>
-                </li>
-                <li class="page-item">
-                  <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                  <a class="page-link" href="#">
-                    <i class="fas fa-angle-right"></i>
-                    <span class="sr-only">Next</span>
-                  </a>
-                </li>
-              </ul>
-            </nav>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <!-- Card footer -->
+            <div class="card mb-4">
+              <!-- ... tabla ... -->
+              <div class="card-footer py-4">
+                <nav aria-label="Mis organizaciones pagination">
+                  <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item {% if my_orgs.page == 1 %}disabled{% endif %}">
+                      <a class="page-link" href="?my_orgs_page={{ my_orgs.page - 1 }}&other_orgs_page={{ other_orgs.page }}" tabindex="-1">
+                        <i class="fas fa-angle-left"></i>
+                      </a>
+                    </li>
+                    
+                    {% for p in range(1, my_orgs.pages + 1) %}
+                    <li class="page-item {% if p == my_orgs.page %}active{% endif %}">
+                      <a class="page-link" href="?my_orgs_page={{ p }}&other_orgs_page={{ other_orgs.page }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if my_orgs.page == my_orgs.pages %}disabled{% endif %}">
+                      <a class="page-link" href="?my_orgs_page={{ my_orgs.page + 1 }}&other_orgs_page={{ other_orgs.page }}">
+                        <i class="fas fa-angle-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    {% endif %}
+    
     <!-- Dark table -->
     <div class="row">
       <div class="col">
@@ -154,7 +148,7 @@
                 </tr>
               </thead>
               <tbody class="list">
-                {% for org in org_data.other_organizations %}
+                {% for org in other_orgs.items %}
                 <tr>
                   <th scope="row">
                     <div class="media align-items-center">
@@ -173,7 +167,7 @@
                     {{ org.member_count }}
                   </td>
                   <td>
-                    <span class="badge badge-dot mr-4">
+                    <span class="badge badge-dot" style="white-space: normal; white-space: normal; display: inline-block;">
                       {{ org.description }}
                     </span>
                   </td>
@@ -182,12 +176,18 @@
                       <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-ellipsis-v"></i>
                       </a>
+                      {% if not current_user.is_admin %}
                       <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
                         <form method="POST" action="{{ url_for('organizations_blueprint.join', organization_id=org.id) }}">
                           <button class="dropdown-item" type="submit" {% if not current_user.is_authenticated %}disabled title="Debes iniciar sesión"{% endif %}>Unirse</button>
                         </form>
                       </div>
+                      {% else %}
+                      <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow">
+                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}">Visitar</a>
+                        <a class="dropdown-item" href="{{ url_for('organizations_blueprint.manage_organization', organization_id=org.id) }}">Editar</a>
                     </div>
+                      {% endif %}
                   </td>
                 </tr>
                 {% endfor %}
@@ -195,30 +195,31 @@
             </table>
           </div>
           <!-- Card footer -->
-          <div class="card-footer py-4">
-            <nav aria-label="...">
-              <ul class="pagination justify-content-end mb-0">
-                <li class="page-item disabled">
-                  <a class="page-link" href="#" tabindex="-1">
-                    <i class="fas fa-angle-left"></i>
-                    <span class="sr-only">Previous</span>
-                  </a>
-                </li>
-                <li class="page-item active">
-                  <a class="page-link" href="#">1</a>
-                </li>
-                <li class="page-item">
-                  <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                  <a class="page-link" href="#">
-                    <i class="fas fa-angle-right"></i>
-                    <span class="sr-only">Next</span>
-                  </a>
-                </li>
-              </ul>
-            </nav>
+          <div class="card">
+            <!-- ... tabla ... -->
+            <div class="card-footer py-4 bg-default">
+              <nav aria-label="Otras organizaciones pagination">
+                <ul class="pagination justify-content-end mb-0">
+                  <li class="page-item {% if other_orgs.page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?my_orgs_page={{ my_orgs.page }}&other_orgs_page={{ other_orgs.page - 1 }}" tabindex="-1">
+                      <i class="fas fa-angle-left"></i>
+                    </a>
+                  </li>
+                  
+                  {% for p in range(1, other_orgs.pages + 1) %}
+                  <li class="page-item {% if p == other_orgs.page %}active{% endif %}">
+                    <a class="page-link" href="?my_orgs_page={{ my_orgs.page }}&other_orgs_page={{ p }}">{{ p }}</a>
+                  </li>
+                  {% endfor %}
+                  
+                  <li class="page-item {% if other_orgs.page == other_orgs.pages %}disabled{% endif %}">
+                    <a class="page-link" href="?my_orgs_page={{ my_orgs.page }}&other_orgs_page={{ other_orgs.page + 1 }}">
+                      <i class="fas fa-angle-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         </div>
         </div>

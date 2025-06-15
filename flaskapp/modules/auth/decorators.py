@@ -20,6 +20,9 @@ def admin_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        print(f"Checking admin access for user: {current_user.id}", flush=True)
+        print(f"User is authenticated: {current_user.is_authenticated}", flush=True)
+        print(f"User is admin: {current_user.is_admin}", flush=True)
         if not current_user.is_authenticated or not current_user.is_admin:
             abort(403)
         return f(*args, **kwargs)
@@ -60,9 +63,9 @@ def organization_member_required(organization_param='organization_id'):
                 user_id=current_user.id
             ).first()
             
-            if not membership:
-                flash('No tienes acceso a esta organización.', 'error')
-                return redirect(url_for('main.dashboard'))
+            if not membership and not current_user.is_admin:
+                flash('No tienes acceso a esta organización.', 'danger')
+                return redirect(url_for('organizations_blueprint.index'))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -97,8 +100,8 @@ def organization_organizer_required(organization_param='organization_id'):
             ).first()
             
             if not membership:
-                flash('No tienes permisos de organizador en esta organización.', 'error')
-                return redirect(url_for('organization.detail', organization_id=organization_id))
+                flash('No tienes permisos de organizador en esta organización.', 'danger')
+                return redirect(url_for('organizations_blueprint.detail', organization_id=organization_id))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -132,8 +135,8 @@ def tournament_referee_required(tournament_param='tournament_id'):
             ).first()
             
             if not referee:
-                flash('No tienes permisos de árbitro en este torneo.', 'error')
-                return redirect(url_for('tournament.detail', tournament_id=tournament_id))
+                flash('No tienes permisos de árbitro en este torneo.', 'danger')
+                return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -168,8 +171,8 @@ def team_leader_required(team_param='team_id'):
             ).first()
             
             if not membership:
-                flash('No tienes permisos de líder en este equipo.', 'error')
-                return redirect(url_for('team.detail', team_id=team_id))
+                flash('No tienes permisos de líder en este equipo.', 'danger')
+                return redirect(url_for('teams_blueprint.detail', team_id=team_id))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -203,8 +206,8 @@ def team_member_required(team_param='team_id'):
             ).first()
             
             if not membership:
-                flash('No eres miembro de este equipo.', 'error')
-                return redirect(url_for('main.dashboard'))
+                flash('No eres miembro de este equipo.', 'danger')
+                return redirect(url_for('team_blueprint.index'))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -241,8 +244,8 @@ def tournament_participant_allowed(tournament_param='tournament_id'):
             ).first()
             
             if is_referee:
-                flash('No puedes participar como jugador siendo árbitro del torneo.', 'error')
-                return redirect(url_for('tournament.detail', tournament_id=tournament_id))
+                flash('No puedes participar como jugador siendo árbitro del torneo.', 'danger')
+                return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
             
             # Verificar que no esté ya en otro equipo del torneo
             existing_team = TeamMember.query.join(Team).filter(
@@ -253,8 +256,8 @@ def tournament_participant_allowed(tournament_param='tournament_id'):
             ).first()
             
             if existing_team:
-                flash('Ya estás participando en este torneo con otro equipo.', 'error')
-                return redirect(url_for('tournament.detail', tournament_id=tournament_id))
+                flash('Ya estás participando en este torneo con otro equipo.', 'danger')
+                return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
             
             return f(*args, **kwargs)
         return decorated_function
@@ -324,13 +327,13 @@ def tournament_access_required(require_organizer=False, require_referee=False):
             ).first()
             
             if not membership:
-                flash('No tienes acceso a esta organización.', 'error')
-                return redirect(url_for('main.dashboard'))
+                flash('No tienes acceso a esta organización.', 'danger')
+                return redirect(url_for('organizations_blueprint.index'))
             
             # Verificar permisos específicos
             if require_organizer and not membership.is_organizer:
-                flash('Necesitas permisos de organizador.', 'error')
-                return redirect(url_for('tournament.detail', tournament_id=tournament_id))
+                flash('Necesitas permisos de organizador.', 'danger')
+                return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
             
             if require_referee:
                 referee = TournamentReferee.query.filter_by(
@@ -340,7 +343,7 @@ def tournament_access_required(require_organizer=False, require_referee=False):
                 
                 if not referee:
                     flash('Necesitas ser árbitro de este torneo.', 'error')
-                    return redirect(url_for('tournament.detail', tournament_id=tournament_id))
+                    return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
             
             return f(*args, **kwargs)
         return decorated_function

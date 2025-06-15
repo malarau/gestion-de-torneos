@@ -1,0 +1,120 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ segment|capitalize }} {% endblock title %}
+{% block content %} 
+  
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+        <div class="row align-items-center py-4">
+            <div class="col-lg-6 col-7">
+            <h6 class="h2 text-white d-inline-block mb-0">{{ segment|capitalize }}</h6>
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                <li class="breadcrumb-item"><a href="#">{{ segment|capitalize }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Editar{% else %}Inicio{% endif %}</li>
+                </ol>
+            </nav>
+            </div>
+        </div>
+
+        {% include 'includes/flash_messages.html' %}
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <!-- Formulario principal -->
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header bg-transparent">
+          <h3 class="mb-0">
+            {% if is_edit %}Editar{% else %}Crear{% endif %} Organización
+          </h3>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+              {{ form.name.label(class="form-control-label") }}
+              {{ form.name(class="form-control") }}
+              {% for error in form.name.errors %}
+                <small class="text-danger">{{ error }}</small>
+              {% endfor %}
+            </div>
+            <div class="form-group">
+              {{ form.description.label(class="form-control-label") }}
+              {{ form.description(class="form-control", rows=4) }}
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">
+                {% if is_edit %}Actualizar{% else %}Crear{% endif %} Organización
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de organizadores (solo en edición) -->
+    {% if is_edit %}
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+          <h3 class="mb-0">Organizadores</h3>
+          <span class="badge badge-primary">{{ members|length }} miembros</span>
+        </div>
+        <div class="card-body">
+          <!-- Buscador -->
+          <form method="GET" class="mb-4">
+            <input type="hidden" name="organization_id" value="{{ organization.id }}">
+            <div class="input-group">
+              <input type="text" name="search" value="{{ search_query }}" 
+                     class="form-control" placeholder="Buscar por nombre/email...">
+              <div class="input-group-append">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-search"></i>
+                </button>
+                {% if search_query %}
+                <a href="{{ url_for('organizations_blueprint.manage_organization', organization_id=organization.id) }}" 
+                   class="btn btn-outline-danger">
+                  <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </form>
+
+          <!-- Lista de miembros -->
+          <div class="list-group-flush" style="max-height: 400px; overflow-y: auto;">
+            {% for member in members %}
+            <div class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">{{ member.name }}</h6>
+                  <small class="text-muted">{{ member.email }}</small>
+                </div>
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" 
+                         id="org-switch-{{ member.id }}"
+                         {% if member.is_organizer %}checked{% endif %}
+                         onclick="window.location.href='{{ url_for('organizations_blueprint.manage_organization', organization_id=organization.id, toggle_organizer=member.id, search=search_query) }}'">
+                  <label class="custom-control-label" for="org-switch-{{ member.id }}"></label>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-3">
+              {% if search_query %}No hay resultados{% else %}No hay miembros{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
