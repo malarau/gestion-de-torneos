@@ -57,11 +57,11 @@ def register():
     create_account_form = CreateAccountForm(request.form)
     if 'register' in request.form:
 
-        username = request.form['username']
+        name = request.form['username']
         email = request.form['email']
 
         # Check usename exists
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(name=name).first()
         if user:
             return render_template('authentication/register.html',
                                    msg='Username already registered',
