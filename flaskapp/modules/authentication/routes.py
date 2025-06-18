@@ -57,7 +57,7 @@ def register():
     create_account_form = CreateAccountForm(request.form)
     if 'register' in request.form:
 
-        name = request.form['username']
+        name = request.form['name']
         email = request.form['email']
 
         # Check usename exists
