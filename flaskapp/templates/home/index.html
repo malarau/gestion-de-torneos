@@ -23,7 +23,9 @@
               </nav>
             </div>
             <div class="col-lg-6 col-5 text-right">
+              {% if current_user.is_admin %}
               <a href="#" class="btn btn-sm btn-neutral">Nueva organización</a>
+              {% endif %}
             </div>
           </div>
           <!-- Card stats -->
@@ -161,7 +163,9 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> 
+      <!-- TABLA DE PAGINAS MAS VISITADAS, POR MIENTRAS LO COMENTO-->
+      <!--
       <div class="row">
         <div class="col-xl-8">
           <div class="card">
@@ -174,9 +178,10 @@
                   <a href="#!" class="btn btn-sm btn-primary">See all</a>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="table-responsive">
               <!-- Projects table -->
+               <!--
               <table class="table align-items-center table-flush">
                 <thead class="thead-light">
                   <tr>
@@ -261,8 +266,9 @@
               </table>
             </div>
           </div>
-        </div>
-        <div class="col-xl-4">
+        </div> -->
+        <!-- TABLA DE TRAFICO DE REDES SOCIALES, POR MIENTRAS LO COMENTO-->
+        <!-- <div class="col-xl-4">
           <div class="card">
             <div class="card-header border-0">
               <div class="row align-items-center">
@@ -273,10 +279,10 @@
                   <a href="#!" class="btn btn-sm btn-primary">See all</a>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="table-responsive">
               <!-- Projects table -->
-              <table class="table align-items-center table-flush">
+              <!-- <table class="table align-items-center table-flush">
                 <thead class="thead-light">
                   <tr>
                     <th scope="col">Referral</th>
@@ -376,13 +382,11 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
+              </table> -->
             </div>
           </div>
         </div>
       </div>
-
-      {% include "includes/footer.html" %}
 
     </div>
 

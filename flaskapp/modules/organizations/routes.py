@@ -16,10 +16,10 @@ org_bp = Blueprint(
     url_prefix='/organizations'
 )
 
+#Página principal de las organizaciones
 @org_bp.route('/')
 @login_required
 def index():
-    """Página principal de organizaciones"""
     my_orgs, other_orgs = OrganizationService.get_organization_groups()
 
     print(f"\n{my_orgs=}", flush=True)
@@ -32,6 +32,7 @@ def index():
         segment='Organizaciones'
     )
 
+#Página para editar una organización o crearla
 @org_bp.route('/manage/', methods=['GET', 'POST'])
 @org_bp.route('/manage/<int:organization_id>', methods=['GET', 'POST'])
 @login_required
