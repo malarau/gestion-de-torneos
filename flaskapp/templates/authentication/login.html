@@ -1,6 +1,6 @@
 {% extends 'layouts/base-fullscreen.html' %}
 
-{% block title %} Login {% endblock title %}
+{% block title %} Iniciar Sesión {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -15,13 +15,13 @@
             <div class="card-header bg-transparent pb-5">
 
               <div class="text-muted text-center mt-2 mb-3">              
-                LOGIN
+                Iniciar Sesión
                 <br />
                 {% if msg %}
                   <span class="text-danger">{{ msg | safe }}</span>
                 {% else %}
                 <span>
-                  Bla bla bla 123
+                  Ingrese sus credenciales
                 </span>
                 {% endif %}
               </div>
@@ -38,7 +38,7 @@
                     <div class="input-group-prepend">
                       <span class="input-group-text"><i class="ni ni-single-02"></i></span>
                     </div>
-                    {{ form.email(placeholder="Email",class="form-control") }}
+                    {{ form.email(placeholder="Correo Electrónico",class="form-control") }}
                   </div>
                 </div>
                 <div class="form-group">
@@ -46,19 +46,19 @@
                     <div class="input-group-prepend">
                       <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
                     </div>
-                    {{ form.password(placeholder="Password",class="form-control",type="password") }}
+                    {{ form.password(placeholder="Contraseña",class="form-control",type="password") }}
                   </div>
                 </div>
 
                 <div class="text-center">
-                  <button type="submit" name="login" class="btn btn-primary my-4">Sign in</button>
+                  <button type="submit" name="login" class="btn btn-primary my-4">Iniciar Sesión</button>
                 </div>
               </form>
             </div>
           </div>
           <div class="row mt-3 text-center">
             <div class="col-12">
-              <a href="{{ url_for('authentication_blueprint.register') }}" class="text-light"><small>Create new account</small></a>
+              <a href="{{ url_for('authentication_blueprint.register') }}" class="text-light"><small>Crear una cuenta</small></a>
             </div>
           </div>
         </div>

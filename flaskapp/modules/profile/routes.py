@@ -41,3 +41,4 @@ def profile(user_id):
         form=form if profile_data.is_current_user else None,
         segment='profile'
     )
+
