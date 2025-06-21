@@ -19,6 +19,14 @@
                 class="btn btn-neutral">
                 <i class="fas fa-cog mr-2"></i>Editar organización
             </a>
+            <a href="{{ url_for('events_blueprint.manage', organization_id=org.id) }}" 
+                class="btn btn-neutral">
+                <i class="fas fa-plus mr-2"></i>Crear Evento
+            </a>
+            <a href="{{ url_for('organizations_blueprint.manage_organization', organization_id=org.id) }}" 
+                class="btn btn-neutral">
+                <i class="fas fa-plus mr-2"></i>Crear Torneo
+            </a>
             </div>
         {% endif %}
       </div>
