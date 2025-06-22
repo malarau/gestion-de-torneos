@@ -11,9 +11,13 @@
             <h6 class="h2 text-white d-inline-block mb-0">{{ segment|capitalize }}</h6>
             <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
                 <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
-                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-                <li class="breadcrumb-item"><a href="#">{{ segment|capitalize }}</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Inicio</li>
+                <li class="breadcrumb-item"><i class="fa-solid fa-layer-group" style="color: #ec946b;"></i></li>
+                <li class="breadcrumb-item">{{ segment|capitalize }}</li>
+                <li class="breadcrumb-item active" aria-current="page">
+                  <a href="{{ url_for('home_blueprint.index', ) }}" >
+                    <strong> Volver </strong>
+                  </a>
+                </li>
                 </ol>
             </nav>
             </div>
