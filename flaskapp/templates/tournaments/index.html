@@ -1,0 +1,91 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ segment|capitalize }} {% endblock title %}
+{% block content %} 
+  
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+        <div class="row align-items-center py-4">
+            <div class="col-lg-6 col-7">
+            <h6 class="h2 text-white d-inline-block mb-0">{{ segment|capitalize }}</h6>
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                <li class="breadcrumb-item"><a href="#">{{ segment|capitalize }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Inicio</li>
+                </ol>
+            </nav>
+            </div>
+        </div>
+
+        {% include 'includes/flash_messages.html' %}
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="mb-0">Torneos de la Organización</h3>
+                </div>
+                <div class="col text-right">
+                    <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id) }}" 
+                    class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Torneo
+                    </a>
+                </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                    <tr>
+                    <th>Nombre</th>
+                    <th>Actividad</th>
+                    <th>Fechas</th>
+                    <th>Equipos</th>
+                    <th>Estado</th>
+                    <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tournament in tournaments %}
+                    <tr>
+                    <td>
+                        <a href="{{ url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament.id) }}">
+                        {{ tournament.name }}
+                        </a>
+                    </td>
+                    <td>{{ tournament.activity_name }}</td>
+                    <td>{{ tournament.start_date }} al {{ tournament.end_date }}</td>
+                    <td>{{ tournament.team_count }}/{{ tournament.max_teams }}</td>
+                    <td>
+                        <span class="badge badge-{% if tournament.status == 'completed' %}success{% elif tournament.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                        {{ tournament.status|title }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        {% if tournament.can_edit %}
+                        <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
+                        class="btn btn-sm btn-neutral">Editar</a>
+                        {% endif %}
+                    </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                    <td colspan="6" class="text-center">No hay torneos registrados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+            </div>
+    </div>      
+  </div>
+</div>
+{% endblock %}

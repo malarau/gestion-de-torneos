@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import request
 from flask_login import current_user
-from typing import List, Tuple
+from typing import List
 
 from sqlalchemy import case
 from flaskapp.database.models import Activity, Event, Tournament, TournamentStatus, User, db, Organization, OrganizationMember
@@ -102,23 +102,23 @@ class OrganizationService:
             db.joinedload(Organization.members)
         ).get_or_404(organization_id)
 
-        # Obtener evento actual (que incluye hoy en su rango de fechas)
+        # Obtener eventos activos (que incluyen hoy en su rango de fechas)
         today = datetime.utcnow().date()
-        current_event = Event.query.filter(
+        active_events = Event.query.filter(
             Event.organization_id == organization_id,
             Event.start_date <= today,
             Event.end_date >= today
-        ).order_by(Event.start_date.desc()).first()
+        ).order_by(Event.start_date.desc()).all()
 
-        # Obtener torneo activo (no completado ni cancelado)
+        # Obtener torneos activos (no completados ni cancelados)
         active_statuses = ['pending', 'in_progress', 'paused']
-        current_tournament = Tournament.query.join(
+        active_tournaments = Tournament.query.join(
             TournamentStatus,
             Tournament.status_id == TournamentStatus.id
         ).filter(
             Tournament.organization_id == organization_id,
             TournamentStatus.code.in_(active_statuses)
-        ).order_by(Tournament.start_date.desc()).first()
+        ).order_by(Tournament.start_date.desc()).all()
 
         # Obtener torneos pasados (completados)
         past_tournaments = Tournament.query.join(
@@ -141,7 +141,7 @@ class OrganizationService:
                 start_date=event.start_date.strftime('%Y-%m-%d'),
                 end_date=event.end_date.strftime('%Y-%m-%d'),
                 status=event.status.code
-            ) if event else None
+            )
 
         def to_tournament_dto(tournament: Tournament) -> TournamentDTO:
             return TournamentDTO(
@@ -152,8 +152,8 @@ class OrganizationService:
                 end_date=tournament.end_date.strftime('%Y-%m-%d %H:%M') if tournament.end_date else 'N/A',
                 status=tournament.status.code,
                 team_count=len(tournament.teams)
-            ) if tournament else None
-        
+            )
+
         # Verificar si el usuario es organizador
         is_organizer = OrganizationMember.query.filter_by(
             organization_id=organization_id,
@@ -168,8 +168,8 @@ class OrganizationService:
             created_at=org.created_at.strftime('%Y-%m-%d'),
             creator_name=org.creator.name,
             member_count=len(org.members),
-            current_event=to_event_dto(current_event),
-            current_tournament=to_tournament_dto(current_tournament),
+            active_events=[to_event_dto(e) for e in active_events],
+            active_tournaments=[to_tournament_dto(t) for t in active_tournaments],
             past_tournaments=[to_tournament_dto(t) for t in past_tournaments],
             is_organizer=is_organizer
         )

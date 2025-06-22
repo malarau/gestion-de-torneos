@@ -1,0 +1,249 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="header pb-6 d-flex align-items-center" 
+     style="min-height: 500px; background-image: url(/static/assets/img/theme/tournament-bg.jpg); background-size: cover; background-position: center top;">
+  <!-- Mask -->
+  <span class="mask bg-gradient-dark opacity-8"></span>
+  <!-- Header container -->
+  <div class="container-fluid d-flex align-items-center">
+    <div class="row w-100">
+      <div class="col-lg-8 col-md-10">
+        <h1 class="display-2 text-white">{{ tournament.name }}</h1>
+        <p class="text-white mt-0 mb-2">{{ tournament.description|truncate(100) if tournament.description else "Torneo competitivo" }}</p>
+        
+        <div class="d-flex align-items-center mt-3">
+          <span class="badge badge-{% if tournament.status == 'COMPLETED' %}success{% elif tournament.status == 'CANCELLED' %}danger{% else %}primary{% endif %}">
+            {{ tournament.status|replace('_', ' ')|title }}
+          </span>
+          
+          {% if tournament.is_team_creation_open %}
+          <span class="badge badge-success ml-2">Inscripciones Abiertas</span>
+          {% endif %}
+        </div>
+        
+        <div class="mt-4">
+          {% if tournament.can_edit %}
+          <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
+             class="btn btn-neutral">
+            <i class="fas fa-cog mr-2"></i>Gestionar Torneo
+          </a>
+          {% endif %}
+          
+          {% if can_create_team %}
+          <a href="{{ url_for('teams_blueprint.create', organization_id=organization_id, tournament_id=tournament.id) }}" 
+            class="btn btn-primary">
+              <i class="fas fa-plus"></i> Crear Equipo
+          </a>
+          {% endif %}
+        </div>
+
+        <div class="mt-3">
+          {% include 'includes/flash_messages.html' %}
+        </div>
+
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="card bg-secondary shadow border-0">
+            <div class="card-body px-lg-5 py-lg-5">
+                <div class="text-center text-muted mb-4">
+                    Detalles del Torneo
+                </div>
+                <div class="text-left">
+                    <p class="text-muted">
+                        <strong><i class="fas fa-calendar-alt mr-2"></i>Fechas:</strong>
+                        {{ tournament.start_date if tournament.start_date else 'Por definir' }} - 
+                        {{ tournament.end_date if tournament.end_date else 'Por definir' }}
+                    </p>
+                    <p class="text-muted">
+                        <strong><i class="fas fa-users mr-2"></i>Equipos:</strong>
+                        {{ tournament.teams|length }} / {{ tournament.max_teams }}
+                    </p>
+                    <p class="text-muted">
+                        <strong><i class="fas fa-trophy mr-2"></i>Premios:</strong>
+                        {{ tournament.prizes|truncate(30) if tournament.prizes else "Por definir" }}
+                    </p>
+                    <p class="text-muted">
+                        <strong><i class="fas fa-info-circle mr-2"></i>Estado:</strong>
+                        <span class="badge badge-{{ 'success' if tournament.status.code == 'REGISTRATION_OPEN' else 'warning' if tournament.status.code == 'IN_PROGRESS' else 'primary' if tournament.status.code == 'COMPLETED' else 'danger' }}">
+                            {{ tournament.status }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-8 order-xl-1">
+      <!-- Detalles del Torneo -->
+      <div class="card">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h3 class="mb-0">Detalles del Torneo</h3>
+            </div>
+            <div class="col-4 text-right">
+              <span class="badge badge-pill badge-default">{{ tournament.activity_name }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="pl-lg-4">
+            {% if tournament.description %}
+            <div class="mb-4">
+              <h5>Descripción</h5>
+              <p class="lead">{{ tournament.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Sección de Brackets -->
+            <div class="mt-5">
+              <h4 class="mb-4">Estructura del Torneo</h4>
+              <div id="brackets-container" class="brackets-wrapper">
+                <canvas id="bracket-canvas" width="100%" height="500"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div class="col-xl-4 order-xl-2">
+  <!-- Árbitros -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="row align-items-center">
+        <div class="col-8">
+          <h3 class="mb-0">Árbitros</h3>
+        </div>
+        <div class="col-4 text-right">
+          <span class="badge badge-pill badge-primary">{{ tournament.referees|length }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if tournament.referees %}
+      <div class="list-group">
+        {% for referee in tournament.referees %}
+        <div class="list-group-item list-group-item-action">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <img alt="{{ referee.name }}" src="{{ referee.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" class="avatar rounded-circle">
+            </div>
+            <div class="col ml--2">
+                <h4 class="mb-0 text-sm">
+                    <a href="{{ url_for('profile_blueprint.profile', user_id=referee.user_id) }}">
+                        {{ referee.name }}
+                    </a>
+                </h4>
+              <span class="text-muted">{{ referee.email }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-4">
+        <i class="fas fa-user-shield fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No hay árbitros asignados</h5>
+        {% if tournament.can_edit %}
+        <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" class="btn btn-sm btn-primary mt-2">
+          Asignar Árbitros
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Equipos -->
+  <div class="card">
+    <div class="card-header">
+      <div class="row align-items-center">
+        <div class="col-8">
+          <h3 class="mb-0">Equipos</h3>
+        </div>
+        <div class="col-4 text-right">
+          <span class="badge badge-pill badge-info">{{ tournament.team_count }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+  {% if tournament.team_count > 0 %}
+  <div class="list-group">
+    {% for team in tournament.teams %}
+    <div class="row align-items-center py-3 border-bottom">
+      <div class="col">
+        <h4 class="mb-1 text-sm">
+        <a href="{{ url_for('teams_blueprint.detail', organization_id=organization_id, tournament_id=tournament.id, team_id=team.id) }}" class="btn btn-sm btn-primary mt-2">
+          {{ team.name }}
+        </a>
+        </h4>
+        <div class="avatar-group mt-2">
+          {% for member in team.members[:5] %}
+           <a href="{{ url_for('profile_blueprint.profile', user_id=member.user_id) }}"
+                class="avatar avatar-xs rounded-circle" 
+                data-toggle="tooltip" 
+                data-placement="top"
+                title="{{ member.name }}{% if member.is_leader %} (Líder){% endif %}">
+                <img alt="{{ member.name }}" src="{{ member.profile_picture }}">
+            </a>
+            {% endfor %}
+            {% if team.members|length > 5 %}
+                <span class="avatar avatar-xs rounded-circle bg-secondary text-white"
+                        data-toggle="tooltip"
+                        data-placement="top"
+                        title="{% for member in team.members[5:] %}{{ member.name }}{% if not loop.last %}, {% endif %}{% endfor %}">
+                    +{{ team.members|length - 5 }}
+                </span>
+            {% endif %}
+        </div>
+      </div>
+      <!-- Seed score aligned middle vertically -->
+      <div class="col-auto d-flex align-items-center">
+        <span class="badge badge-pill badge-default">{{ team.seed_score }} pts</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-4">
+    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No hay equipos registrados</h5>
+    {% if can_create_team %}
+    <a href="{{ url_for('teams_blueprint.create', organization_id=organization_id, tournament_id=tournament.id) }}"  class="btn btn-sm btn-success mt-2">
+      Crear Primer Equipo
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+  </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ super() }}
+<!-- Incluir librerías para brackets -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script>
+  // Inicialización de tooltips
+  $(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Implementación básica del bracket (ejemplo)
+    const ctx = document.getElementById('bracket-canvas').getContext('2d');
+    // Aquí iría la lógica para renderizar el bracket
+    // basado en los matches del torneo
+  });
+</script>
+{% endblock %}
