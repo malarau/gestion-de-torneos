@@ -1,11 +1,109 @@
 from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 from flask_login import current_user
-from flaskapp.database.models import db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User
+from flaskapp.database.models import TeamInvitationStatus, db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User, TeamInvitation, Team
 from flaskapp.modules.tournaments.dto import EligibleRefereeDTO, TeamDTO, TeamMemberDTO, TournamentDTO, TournamentDetailDTO
 from typing import List
 
 class TournamentService:
+
+    @staticmethod
+    def get_team_initation_status_id(code: str) -> int:
+        return db.session.query(TeamInvitationStatus.id).filter_by(code=code).scalar()
+
+    @staticmethod
+    def get_user_pending_invitations(tournament_id, user_id):
+        """Obtiene todas las invitaciones pendientes de un usuario para un torneo específico"""
+
+        pending_status_id = db.session.query(TeamInvitationStatus.id).filter_by(code='PENDING').scalar()
+
+        return TeamInvitation.query.join(
+            Team, Team.id == TeamInvitation.team_id
+        ).filter(
+            Team.tournament_id == tournament_id,
+            TeamInvitation.invited_user_id == user_id,
+            TeamInvitation.status_id == pending_status_id
+        ).all()
+
+    @staticmethod
+    def reject_invitation(invitation_id, user_id):
+        pending_status_id = TournamentService.get_team_initation_status_id('PENDING')
+        rejected_status_id = TournamentService.get_team_initation_status_id('REJECTED')
+
+        invitation = TeamInvitation.query.filter(
+            TeamInvitation.id == invitation_id,
+            TeamInvitation.invited_user_id == user_id,
+            TeamInvitation.status_id == pending_status_id
+        ).first_or_404()
+
+        try:
+            invitation.status_id = rejected_status_id
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
+
+    @staticmethod
+    def accept_invitation(invitation_id, user_id):
+        """Acepta una invitación y rechaza las demás"""
+        pending_status_id = TournamentService.get_team_initation_status_id('PENDING')
+        accepted_status_id = TournamentService.get_team_initation_status_id('ACCEPTED')
+        rejected_status_id = TournamentService.get_team_initation_status_id('REJECTED')
+
+        invitation = TeamInvitation.query.filter_by(
+            id=invitation_id,
+            invited_user_id=user_id,
+            status_id=pending_status_id
+        ).first_or_404()
+
+        # Verificar que el usuario no esté ya en otro equipo del torneo
+        existing_membership = TeamMember.query.join(
+            Team, Team.id == TeamMember.team_id
+        ).filter(
+            Team.tournament_id == invitation.team.tournament_id,
+            TeamMember.user_id == user_id
+        ).first()
+
+        if existing_membership:
+            raise ValueError("Ya eres miembro de otro equipo en este torneo")
+
+        # Verificar que el usuario no sea árbitro del torneo
+        if any(ref.user_id == user_id for ref in invitation.team.tournament.referees):
+            raise ValueError("Los árbitros no pueden unirse a equipos")
+
+        try:
+            # Aceptar esta invitación
+            invitation.status_id = accepted_status_id
+
+            # Rechazar todas las demás pendientes
+            invitations = TeamInvitation.query.join(
+                Team, Team.id == TeamInvitation.team_id
+            ).filter(
+                Team.tournament_id == invitation.team.tournament_id,
+                TeamInvitation.invited_user_id == user_id,
+                TeamInvitation.status_id == pending_status_id,
+                TeamInvitation.id != invitation.id
+            ).all()
+
+            for inv in invitations:
+                inv.status_id = rejected_status_id
+
+
+            # Agregar usuario como miembro del equipo
+            db.session.add(TeamMember(
+                team_id=invitation.team_id,
+                user_id=user_id,
+                is_leader=False
+            ))
+
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            raise e
+
 
     @staticmethod
     def can_create_team(tournament_id: int, user_id: int = None) -> bool:
