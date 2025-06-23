@@ -136,7 +136,7 @@ def tournament_referee_required(tournament_param='tournament_id'):
             
             if not referee:
                 flash('No tienes permisos de árbitro en este torneo.', 'danger')
-                return redirect(url_for('tournament_blueprint.detail', tournament_id=tournament_id))
+                return redirect(url_for('matches_blueprint.detail', organization_id=kwargs.get('organization_id'), tournament_id=tournament_id, match_id=kwargs.get('match_id')))
             
             return f(*args, **kwargs)
         return decorated_function

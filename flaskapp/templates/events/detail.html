@@ -65,7 +65,46 @@
         </div>
         <div class="card-body">
           {% if event.tournaments_count > 0 %}
-            <!-- Lista de torneos -->
+            <div class="table-responsive">
+              <table class="table align-items-center table-flush">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Actividad</th>
+                    <th>Inicio</th>
+                    <th>Cierre</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for t in event.tournaments %}
+                    <tr>
+                      <td><i class="fas fa-trophy text-warning mr-1"></i> {{ t.name }}</td>
+                      <td>{{ t.activity_name }}</td>
+                      <td>{{ t.start_date }}</td>
+                      <td>{{ t.end_date }}</td>
+                      <td>
+                        <span class="badge 
+                          {% if t.status == 'REGISTRATION_OPEN' %} badge-success
+                          {% elif t.status == 'IN_PROGRESS' %} badge-primary
+                          {% elif t.status == 'FINISHED' %} badge-secondary
+                          {% else %} badge-light
+                          {% endif %}
+                        ">
+                          {{ t.status.replace('_', ' ').capitalize() }}
+                        </span>
+                      </td>
+                      <td>
+                        <a href="{{ url_for('tournaments_blueprint.detail', organization_id=event.organization_id, tournament_id=t.id) }}" class="btn btn-sm btn-outline-primary">
+                          Ver
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           {% else %}
             <p class="text-muted">Este evento no tiene torneos asociados</p>
           {% endif %}
