@@ -1,0 +1,191 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ segment|capitalize }}{% endblock title %}
+
+{% block content %} 
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">{{ segment|capitalize }}</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="#">{{ segment|capitalize }}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{% if tournament %}Editar{% else %}Crear{% endif %}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+            {% include 'includes/flash_messages.html' %}
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <!-- Formulario del torneo -->
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">{% if tournament %}Editar{% else %}Crear{% endif %} Torneo</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.name.label(class="form-control-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% for error in form.name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form.activity_id.label(class="form-control-label") }}
+                                    {{ form.activity_id(class="form-control") }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form.max_teams.label(class="form-control-label") }}
+                                    {{ form.max_teams(class="form-control") }}
+                                    {% for error in form.max_teams.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form.event_id.label(class="form-control-label") }}
+                                    {{ form.event_id(class="form-control") }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.status_id.label(class="form-control-label") }}
+                                    {{ form.status_id(class="form-control") }}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form.start_date.label(class="form-control-label") }}
+                                    {{ form.start_date(class="form-control datetimepicker") }}
+                                    {% for error in form.start_date.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form.end_date.label(class="form-control-label") }}
+                                    {{ form.end_date(class="form-control datetimepicker") }}
+                                    {% for error in form.end_date.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.description.label(class="form-control-label") }}
+                            {{ form.description(class="form-control", rows=3) }}
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.prizes.label(class="form-control-label") }}
+                            {{ form.prizes(class="form-control", rows=2) }}
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Guardar Torneo</button>
+                            <a href="{{ url_for('tournaments_blueprint.index', organization_id=organization_id) }}" 
+                               class="btn btn-neutral">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestión de árbitros (solo en edición) -->
+        {% if tournament %}
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Árbitros del Torneo</h3>
+                    <span class="badge badge-primary">{{ referees|selectattr('is_referee')|list|length }}/{{ referees|length }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Buscador -->
+                    <form method="GET" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" name="search" value="{{ search_query }}" 
+                                   class="form-control" placeholder="Buscar miembros...">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                    </form>
+
+                    <!-- Lista de árbitros elegibles -->
+                    <div class="list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                        {% for referee in referees %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ referee.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" 
+                                         class="avatar avatar-sm rounded-circle mr-3">
+                                    <div>
+                                        <h6 class="mb-0">{{ referee.name }}</h6>
+                                        <small class="text-muted">{{ referee.email }}</small>
+                                    </div>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" 
+                                           id="referee-switch-{{ referee.user_id }}"
+                                           {% if referee.is_referee %}checked{% endif %}
+                                           onclick="window.location.href='{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id, toggle_referee=referee.user_id, search=search_query) }}'">
+                                    <label class="custom-control-label" for="referee-switch-{{ referee.user_id }}"></label>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted py-3">
+                            {% if search_query %}No hay resultados{% else %}No hay miembros elegibles{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ super() }}
+<!-- Inicialización de datetimepicker -->
+<script>
+$(document).ready(function() {
+    $('.datetimepicker').datetimepicker({
+        format: 'YYYY-MM-DD HH:mm',
+        icons: {
+            time: 'far fa-clock',
+            date: 'far fa-calendar',
+            up: 'fas fa-arrow-up',
+            down: 'fas fa-arrow-down',
+            previous: 'fas fa-chevron-left',
+            next: 'fas fa-chevron-right',
+            today: 'fas fa-calendar-check',
+            clear: 'fas fa-trash',
+            close: 'fas fa-times'
+        }
+    });
+});
+</script>
+{% endblock %}

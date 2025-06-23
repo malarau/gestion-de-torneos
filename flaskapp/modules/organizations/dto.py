@@ -41,8 +41,8 @@ class OrganizationDetailDTO:
     created_at: str
     creator_name: str
     member_count: int
-    current_event: Optional['EventDTO']
-    current_tournament: Optional['TournamentDTO']
+    active_events: List['EventDTO'] 
+    active_tournaments: List['TournamentDTO'] 
     past_tournaments: List['TournamentDTO']
     is_organizer: bool
 

@@ -172,7 +172,7 @@ def team_leader_required(team_param='team_id'):
             
             if not membership:
                 flash('No tienes permisos de líder en este equipo.', 'danger')
-                return redirect(url_for('teams_blueprint.detail', team_id=team_id))
+                return redirect(url_for('teams_blueprint.detail', organization_id=kwargs.get('organization_id'), tournament_id=kwargs.get('tournament_id'), team_id=team_id))
             
             return f(*args, **kwargs)
         return decorated_function

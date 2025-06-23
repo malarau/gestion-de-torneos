@@ -202,9 +202,9 @@ Como usuario perteneciente a una organización, quiero inscribir un equipo a un 
 **Criterios de Aceptación**  
 **PH:** 6  
 1. Visualizando un torneo, el usuario puede crear un equipo para participar si no se ha alcanzado el máximo de equipos permitidos  
-2. Un usuario puede crear equipos solo si no ha sido asignado como árbitro o ya se encuentra asociado a un equipo como jugador dentro de ese mismo torneo  
+2. Un usuario puede crear equipos solo si no ha sido asignado como árbitro o ya se encuentra asociado a un equipo como jugador dentro de ese mismo torneo (ni es organizador de la organización, ni administrador de plataforma)
 3. Al crear un equipo, se vuelve un integrante y líder del mismo automáticamente  
-4. Los equipos tienen identificadores genéricos  
+4. Los equipos tienen identificadores (nombre) genéricos (puede cambiarse)
 
 ---
 
@@ -230,7 +230,7 @@ Como usuario quiero aceptar o rechazar invitaciones para formar parte de un equi
 1. El usuario puede visualizar una sección de invitaciones pendientes desde la vista del torneo  
 2. Para cada invitación, debe existir un botón para aceptar o rechazar  
 3. Al aceptar una invitación, el usuario se convierte en jugador del equipo y todas las otras invitaciones son eliminadas automáticamente  
-4. Al rechazar se elimina la invitación  
+4. Al rechazar se elimina la invitación
 
 ---
 

@@ -162,7 +162,7 @@
                         </div>
                       </a>
                       <div class="media-body">
-                        <span class="name mb-0 text-sm">{{ org.name }}</span>
+                        <a href="{{ url_for('organizations_blueprint.detail', organization_id=org.id) }}"><span class="name mb-0 text-sm">{{ org.name }}</span></a>
                         <div class="text-muted text-xs">Creada: {{ org.created_at }}</div>
                       </div>
                     </div>

@@ -2,21 +2,22 @@
 
 import random
 from datetime import datetime, timedelta
+import uuid
 from faker import Faker
 from sqlalchemy.exc import IntegrityError
 
 from flaskapp import db
 from flaskapp.database.models import (
     User, Organization, OrganizationMember, Activity, ActivityCategory,
-    Event, Tournament, Team, TeamMember, TournamentReferee,
+    Event, Tournament, Team, TeamMember, TournamentReferee, Match,
     EventStatus, TournamentStatus, MatchStatus, TeamInvitationStatus,
     NotificationType, RelatedEntityType
 )
 
 # Configuración inicial
 fake = Faker('es_CL')
-NUM_USERS = 669
-NUM_ORGANIZATIONS = 18
+NUM_USERS = 400
+NUM_ORGANIZATIONS = 14
 NUM_ACTIVITIES = 5
 PASSWORD = "password1" # Contraseña común para desarrollo
 
@@ -48,11 +49,9 @@ def seed_database(app):
             organizations = create_organizations(NUM_ORGANIZATIONS, admins)
             
             print("Asignando miembros a las organizaciones...")
-            # 'organization_members' es una lista de objetos OrganizationMember
             organization_members = assign_members_to_organizations(organizations, users)
 
             print("Generando eventos y torneos...")
-            # Esta función ahora también crea equipos y árbitros
             create_events_and_tournaments(organizations, activities, organization_members)
 
             # 4. Confirmar todos los cambios en la base de datos
@@ -79,7 +78,6 @@ def seed_master_data():
         ],
         TournamentStatus: [
             {'code': 'REGISTRATION_OPEN', 'description': 'Inscripciones abiertas.'},
-            #{'code': 'REGISTRATION_CLOSED', 'description': 'Inscripciones cerradas.'},
             {'code': 'IN_PROGRESS', 'description': 'Torneo en curso.'},
             {'code': 'COMPLETED', 'description': 'Torneo finalizado.'},
             {'code': 'CANCELLED', 'description': 'Torneo cancelado.'},
@@ -111,7 +109,6 @@ def seed_master_data():
             instance = model(**data)
             db.session.add(instance)
     
-    # Hacemos flush para que los IDs estén disponibles para el resto del script
     db.session.flush()
 
 def create_users(num_users):
@@ -129,7 +126,7 @@ def create_users(num_users):
             f_profile_pic = f"https://randomuser.me/api/portraits/women/{i % 100}.jpg"
         else:
             f_name = fake.name_male()
-            f_profile_pic = f"https://randomuser.me/api/portraits/mans/{i % 100}.jpg"
+            f_profile_pic = f"https://randomuser.me/api/portraits/men/{i % 100}.jpg"
             
         user = User(
             name=f_name,
@@ -144,7 +141,7 @@ def create_users(num_users):
         if is_admin:
             admins.append(user)
     
-    db.session.flush() # Para obtener los IDs de los usuarios
+    db.session.flush()
     return users, admins
 
 def create_activities(num_activities):
@@ -180,7 +177,7 @@ def create_organizations(num_orgs, admins):
         org = Organization(
             name=name,
             description=fake.paragraph(nb_sentences=3),
-            creator=random.choice(admins), # Usamos el objeto User directamente
+            creator=random.choice(admins),
             created_at=fake.date_time_between(start_date='-1y', end_date='-6m')
         )
         db.session.add(org)
@@ -193,28 +190,13 @@ def assign_members_to_organizations(organizations, users):
     """Asigna usuarios a organizaciones, definiendo roles."""
     all_memberships = []
     for org in organizations:
-        # 1. El creador es siempre organizador
-        # TODO: Pendiente revisión de concepto. 
-        #   ¿Es necesario que el administrador sea parte de la organización?
-        """
-        creator_membership = OrganizationMember(
-            organization=org,
-            user=org.creator,
-            is_organizer=True,
-            joined_at=org.created_at
-        )
-        db.session.add(creator_membership)
-        all_memberships.append(creator_membership)
-        """
-
-        # 2. Asignar entre 25 y 125 miembros más.
+        # Asignar entre 25 y 125 miembros
         potential_members = [u for u in users if u.id != org.creator.id]
         num_members = random.randint(20, 80)
         members_to_add = random.sample(potential_members, min(num_members, len(potential_members)))
         
-        first_is_organizer = True  # El primer miembro siempre será organizador
+        first_is_organizer = True
         for user in members_to_add:
-            # 10% de probabilidad de ser organizador
             if first_is_organizer: 
                 is_organizer = True
                 first_is_organizer = False
@@ -232,32 +214,31 @@ def assign_members_to_organizations(organizations, users):
     db.session.flush()
     return all_memberships
 
-
 def create_events_and_tournaments(organizations, activities, all_memberships):
     """Crea eventos y torneos para cada organización."""
+    # Obtener estados necesarios
     event_status_planned = db.session.query(EventStatus).filter_by(code='PLANNED').one()
     tourney_status_reg_open = db.session.query(TournamentStatus).filter_by(code='REGISTRATION_OPEN').one()
+    tourney_status_completed = db.session.query(TournamentStatus).filter_by(code='COMPLETED').one()
+    tourney_status_cancelled = db.session.query(TournamentStatus).filter_by(code='CANCELLED').one()
 
-    # Mapear organización a sus miembros para fácil acceso
+    # Mapear organización a sus miembros
     org_member_map = {}
     for m in all_memberships:
         if m.organization_id not in org_member_map:
             org_member_map[m.organization_id] = []
         org_member_map[m.organization_id].append(m)
 
-    # Extraer organizadores de cada organización
     for org in organizations:
-        # Debug: Verificar org
-        print(f"Procesando organización: {org})")
+        print(f"Procesando organización: {org.name} (ID: {org.id})")
         org_members = org_member_map.get(org.id, [])
         organizers = [m.user for m in org_members if m.is_organizer]
         if not organizers:
             continue
 
         # Crear 1-3 eventos por organización
-        used_event_names = set()  # Para evitar duplicados
+        used_event_names = set()
         for _ in range(random.randint(1, 3)):
-            # Asegurarse de que el nombre del evento sea único
             while True:
                 event_name = f"Evento {fake.word().capitalize()} de {fake.historic_people_street_name()}"
                 if event_name not in used_event_names:
@@ -279,88 +260,417 @@ def create_events_and_tournaments(organizations, activities, all_memberships):
                 print(f"Error al crear evento: {e}. Saltando este evento.")
                 continue
         
-        db.session.flush() # Obtener IDs de eventos
+        db.session.flush()
 
-        # Crear 2-5 torneos por organización
-        for _ in range(random.randint(2, 5)):
-            organizer = random.choice(organizers)
-            # 70% de los torneos pertenecen a un evento
-            linked_event = random.choice(org.events) if org.events and random.random() < 0.7 else None
-            
-            start = fake.date_time_this_year(after_now=True)
-            tourney = Tournament(
-                organization=org,
-                event=linked_event,
-                activity=random.choice(activities),
-                name=f"Copa {fake.word().capitalize()} de {org.name}",
-                description=fake.paragraph(nb_sentences=4),
-                max_teams=random.choice([4, 8, 16]),
-                start_date=start,
-                end_date=start + timedelta(days=random.randint(1, 14)),
-                status=tourney_status_reg_open,
-                creator=organizer
-            )
-            db.session.add(tourney)
-            db.session.flush() # Obtenemos el ID del torneo para los equipos
-
-            # Crear equipos y árbitros para este torneo
-            print(f"Creando participantes para el torneo: {tourney.name} (ID: {tourney.id})")
-            create_tournament_participants(tourney, org_members, organizer)
+        # Crear diferentes tipos de torneos
+        create_tournament_variants(org, activities, organizers, 
+                                 tourney_status_reg_open, tourney_status_completed, 
+                                 tourney_status_cancelled, org_members)
     
     db.session.flush()
 
+def get_potential_players_for_tournament(tournament):
+    """
+    Obtiene una lista de usuarios elegibles para participar como jugadores en un torneo.
+    
+    Aplica las siguientes reglas:
+    - Deben ser miembros de la organización del torneo.
+    - NO pueden ser administradores de la plataforma (is_admin).
+    - NO pueden ser organizadores de la organización.
+    - NO pueden ser árbitros asignados a ESE torneo.
+    """
+    print(f"      Filtrando jugadores elegibles para el torneo: {tournament.name}")
+    
+    # Obtener IDs de usuarios que ya son árbitros en este torneo
+    referee_user_ids = {ref.user_id for ref in tournament.referees}
+    
+    potential_players = []
+    # Iteramos sobre los miembros de la organización a la que pertenece el torneo
+    for member in tournament.organization.members:
+        # Aplicamos todas las condiciones de elegibilidad
+        if (not member.user.is_admin and
+                not member.is_organizer and
+                member.user_id not in referee_user_ids):
+            potential_players.append(member.user)
+            
+    print(f"      Encontrados {len(potential_players)} jugadores elegibles.")
+    return potential_players
+
+def create_tournament_variants(org, activities, organizers, status_open, status_completed, status_cancelled, org_members):
+    """Crea diferentes variantes de torneos según los requerimientos."""
+    
+    # 1. Torneos COMPLETADOS (1-2 por organización)
+    for _ in range(random.randint(1, 2)):
+        create_completed_tournament(org, activities, organizers, status_completed, org_members)
+    
+    # 2. Torneos PENDIENTES (2-3 por organización)
+    for _ in range(random.randint(2, 3)):
+        create_pending_tournament(org, activities, organizers, status_open, org_members)
+    
+    # 3. Torneos CANCELADOS (0-2 por organización)
+    for _ in range(random.randint(0, 2)):
+        create_cancelled_tournament(org, activities, organizers, status_cancelled, org_members)
+
+def create_completed_tournament(org, activities, organizers, status_completed, org_members):
+    """Crea un torneo completado con bracket desde semifinales (4 equipos)."""
+    
+    # Fechas pasadas
+    end_date = fake.date_time_between(start_date='-3m', end_date='-1w')
+    start_date = end_date - timedelta(days=random.randint(1, 3))
+    
+    # Evento asociado (opcional)
+    linked_event = random.choice(org.events) if org.events and random.random() < 0.7 else None
+    
+    tournament = Tournament(
+        organization=org,
+        event=linked_event,
+        activity=random.choice(activities),
+        name=f"Copa {fake.word().capitalize()} COMPLETADA",
+        description=fake.paragraph(nb_sentences=2),
+        max_teams=4,  # Exactamente 4 equipos para semifinales
+        start_date=start_date,
+        end_date=end_date,
+        status=status_completed,
+        creator=random.choice(organizers),
+        prizes=f"1er lugar: {fake.currency_name()}, 2do lugar: {fake.currency_name()}"
+    )
+    db.session.add(tournament)
+    db.session.flush()
+    
+    print(f"  Creando torneo completado: {tournament.name}")
+
+    # Crear árbitros
+    create_referees_for_tournament(tournament, org_members, random.choice(organizers))
+    db.session.flush()
+
+    potential_players = get_potential_players_for_tournament(tournament)
+    
+    # Crear exactamente 4 equipos
+    teams = create_teams_for_tournament(tournament, potential_players, 4, prefix="Team")  
+
+    # Si no se pudieron crear los 4 equipos, no se puede generar el bracket.
+    if len(teams) < 4:
+        print(f"    AVISO: No se pudieron crear los 4 equipos necesarios para el bracket completado. Se crearon {len(teams)}. Saltando creación de bracket.")
+        return  
+    
+    # Crear bracket completo (semifinales + final)
+    create_completed_bracket(tournament, teams, end_date)
+
+def create_teams_for_tournament(tournament, potential_players, num_teams, prefix="Team"):
+    """
+    Crea equipos para un torneo a partir de una lista de jugadores elegibles.
+    Garantiza que un jugador solo pertenezca a un equipo por torneo.
+    """   
+    print(f"    Creando {num_teams} equipos para el torneo: {tournament.name}")
+    teams = []
+
+    # Hacemos una copia de la lista para poder modificarla de forma segura
+    available_players = list(potential_players)
+    
+    # Obtener nombres ya usados en este torneo
+    existing_team_names = {t.name for t in tournament.teams}
+    
+    # Fuentes de nombres mejoradas
+    name_generators = [
+        lambda: f"{prefix} {fake.city()}",
+        lambda: f"{fake.color_name()} {prefix}",
+        lambda: f"{prefix} {fake.job()}",
+        lambda: f"{fake.street_suffix()} {prefix}",
+        lambda: f"{prefix} {random.choice(['United', 'FC', 'Gaming', 'Esports', 'Pro'])}",
+        # Use random number to ensure uniqueness
+        lambda: f"{prefix} {random.randint(1, 999)}",
+    ]
+    
+    for i in range(num_teams):
+        if len(potential_players) < tournament.activity.min_players_per_team:
+            print(f"      No hay suficientes jugadores (necesarios: {tournament.activity.min_players_per_team})")
+            break
+
+        # Generar nombre único para este torneo
+        team_name = None
+        for attempt in range(50):  # 50 intentos con diferentes estrategias
+            min_required_players = tournament.activity.min_players_per_team
+            generator = random.choice(name_generators)
+            base_name = generator()
+            
+            # Variaciones para aumentar unicidad
+            variations = [
+                base_name,
+                f"{base_name} {random.randint(1, 999)}",
+                f"{base_name} {fake.street_suffix()}"
+            ]
+            
+            for candidate in variations:
+                if candidate not in existing_team_names:
+                    team_name = candidate
+                    existing_team_names.add(team_name)
+                    break
+            if team_name:
+                break
+        else:
+            # Fallback definitivo garantizado
+            team_name = f"{prefix} {uuid.uuid4().hex[:8]}"
+            print(f"      Usando nombre de fallback único: {team_name}")
+        
+        # Crear equipo
+        try:
+            team = Team(
+                tournament=tournament,
+                name=team_name,
+                seed_score=random.randint(1500, 2500)
+            )
+            db.session.add(team)
+            
+            # Seleccionar y remover al líder de la lista de disponibles
+            team_leader = random.choice(available_players)
+            available_players.remove(team_leader)
+            
+            leader_member = TeamMember(team=team, user=team_leader, is_leader=True)
+            db.session.add(leader_member)
+            
+            # Seleccionar y remover al resto de miembros
+            # Nos aseguramos que haya suficientes jugadores restantes
+            num_other_members = min_required_players - 1
+            if len(available_players) >= num_other_members:
+                other_members = random.sample(available_players, num_other_members)
+                for member in other_members:
+                    db.session.add(TeamMember(team=team, user=member, is_leader=False))
+                    available_players.remove(member) # Crucial: remover para no volver a usarlo
+            
+            db.session.flush() # Commit a nivel de equipo para asegurar consistencia
+            teams.append(team)
+            print(f"      Creado equipo: {team_name} (ID: {team.id}) con {min_required_players} miembros.")
+            
+        except IntegrityError as e:
+            db.session.rollback()
+            print(f"      Error de integridad al crear equipo: {e}. Reintentando...")
+            # Devolver los jugadores a la lista si la transacción falla
+            # (Aunque con nombres únicos y jugadores únicos, es menos probable)
+            continue
+    
+    return teams
+
+def create_completed_bracket(tournament, teams, end_date):
+    """Crea el bracket completo de un torneo terminado (semifinales + final)."""
+    print(f"    Creando bracket para el torneo: {tournament.name}")
+    match_status_completed = db.session.query(MatchStatus).filter_by(code='COMPLETED').one()
+    
+    # Ordenar equipos por seed_score (mejor seed primero)
+    teams.sort(key=lambda t: t.seed_score, reverse=True)
+    
+    # SEMIFINALES (Level 1)
+    # Semifinal 1: Mejor seed vs 4to seed
+    team_a = teams[0]
+    team_b = teams[3]
+    score_a = random.randint(1, 3)
+    score_b = random.randint(1, 3)
+    
+    # Asegurar que haya un ganador claro
+    if score_a == score_b:
+        score_a += 1
+    
+    semi1 = Match(
+        tournament_id=tournament.id,
+        level=1,
+        match_number=2,
+        team_a_id=team_a.id,
+        team_b_id=team_b.id,
+        score_team_a=score_a,
+        score_team_b=score_b,
+        winner_id=team_a.id if score_a > score_b else team_b.id,
+        status_id=match_status_completed.id,
+        completed_at=end_date - timedelta(days=1))
+    
+    # Seleccionar mejor jugador del equipo ganador
+    winning_team = team_a if score_a > score_b else team_b
+    winning_team_members = [m.user_id for m in winning_team.members]
+    semi1.best_player_id = random.choice(winning_team_members) if winning_team_members else None
+    
+    db.session.add(semi1)
+    print(f"    Semifinal 1 creada: {team_a.name} vs {team_b.name}, ganador: {winning_team.name}")
+    
+    # Semifinal 2: 2do seed vs 3er seed
+    team_c = teams[1]
+    team_d = teams[2]
+    score_c = random.randint(1, 3)
+    score_d = random.randint(1, 3)
+    
+    if score_c == score_d:
+        score_c += 1
+    
+    semi2 = Match(
+        tournament_id=tournament.id,
+        level=1,
+        match_number=3,
+        team_a_id=team_c.id,
+        team_b_id=team_d.id,
+        score_team_a=score_c,
+        score_team_b=score_d,
+        winner_id=team_c.id if score_c > score_d else team_d.id,
+        status_id=match_status_completed.id,
+        completed_at=end_date - timedelta(days=1))
+    
+    winning_team2 = team_c if score_c > score_d else team_d
+    winning_team2_members = [m.user_id for m in winning_team2.members]
+    semi2.best_player_id = random.choice(winning_team2_members) if winning_team2_members else None
+    
+    db.session.add(semi2)
+    print(f"    Semifinal 2 creada: {team_c.name} vs {team_d.name}, ganador: {winning_team2.name}")
+
+    db.session.flush()
+    
+    # FINAL (Level 0)
+    final_team_a = db.session.get(Team, semi1.winner_id)
+    final_team_b = db.session.get(Team, semi2.winner_id)
+    final_score_a = random.randint(1, 3)
+    final_score_b = random.randint(1, 3)
+    
+    if final_score_a == final_score_b:
+        final_score_a += 1
+    
+    print(f"    Creando final: {final_team_a.name} vs {final_team_b.name}")
+    final = Match(
+        tournament_id=tournament.id,
+        level=0,
+        match_number=1,
+        team_a_id=final_team_a.id,
+        team_b_id=final_team_b.id,
+        score_team_a=final_score_a,
+        score_team_b=final_score_b,
+        winner_id=final_team_a.id if final_score_a > final_score_b else final_team_b.id,
+        status_id=match_status_completed.id,
+        completed_at=end_date)
+    
+    final_winner = final_team_a if final_score_a > final_score_b else final_team_b
+    final_winner_members = [m.user_id for m in final_winner.members]
+    final.best_player_id = random.choice(final_winner_members) if final_winner_members else None
+    
+    db.session.add(final)
+    
+    print(f"    Bracket creado: {final_team_a.name} vs {final_team_b.name} en final, ganador: {final_winner.name}")
+
+def create_pending_tournament(org, activities, organizers, status_open, org_members):
+    """Crea un torneo pendiente con fechas futuras."""
+    
+    # Fechas futuras (1-8 semanas a partir de hoy)
+    start_date = fake.date_time_between(start_date='+1w', end_date='+8w')
+    end_date = start_date + timedelta(days=random.randint(1, 14))
+    
+    linked_event = random.choice(org.events) if org.events and random.random() < 0.7 else None
+    
+    tournament = Tournament(
+        organization=org,
+        event=linked_event,
+        activity=random.choice(activities),
+        name=f"Copa {fake.word().capitalize()} PENDIENTE",
+        description=fake.paragraph(nb_sentences=4),
+        max_teams=random.choice([4, 8, 16]),
+        start_date=start_date,
+        end_date=end_date,
+        status=status_open,
+        creator=random.choice(organizers)
+    )
+    db.session.add(tournament)
+    db.session.flush()
+    
+    print(f"  Creando torneo pendiente: {tournament.name}")
+    
+    # Crear participantes (equipos incompletos y árbitros)
+    create_tournament_participants(tournament, org_members, random.choice(organizers))
+
+def create_cancelled_tournament(org, activities, organizers, status_cancelled, org_members):
+    """Crea un torneo cancelado con fechas pasadas."""
+    
+    # Fechas pasadas (hace 1-6 meses)
+    start_date = fake.date_time_between(start_date='-6m', end_date='-1m')
+    end_date = start_date + timedelta(days=random.randint(1, 14))
+    
+    linked_event = random.choice(org.events) if org.events and random.random() < 0.7 else None
+    
+    tournament = Tournament(
+        organization=org,
+        event=linked_event,
+        activity=random.choice(activities),
+        name=f"Copa {fake.word().capitalize()} CANCELADA",
+        description=fake.paragraph(nb_sentences=3),
+        max_teams=random.choice([4, 8, 16]),
+        start_date=start_date,
+        end_date=end_date,
+        status=status_cancelled,
+        creator=random.choice(organizers)
+    )
+    db.session.add(tournament)
+    db.session.flush()
+    
+    print(f"  Creando torneo cancelado: {tournament.name}")
+    
+    # Crear algunos participantes (pocos equipos, simular inscripciones incompletas)
+    create_limited_tournament_participants(tournament, org_members, random.choice(organizers))
+
+def create_limited_tournament_participants(tournament, org_members, organizer):
+    """Crea participantes limitados para torneos cancelados usando jugadores elegibles."""
+    
+    # 1. Solo 1-2 árbitros
+    create_referees_for_tournament(tournament, org_members, organizer, count_range=(1,2))
+    db.session.flush()
+
+    # 2. Obtener jugadores elegibles
+    potential_players = get_potential_players_for_tournament(tournament)
+    
+    # 3. Solo 1-3 equipos (inscripciones incompletas)
+    if potential_players:
+        num_teams_to_create = random.randint(1, 3)
+        create_teams_for_tournament(tournament, potential_players, num_teams_to_create, prefix="Team Cancelado")
+
+
+def create_referees_for_tournament(tournament, org_members, organizer, count_range=(2, 4)):
+    """
+    Crea árbitros para un torneo a partir de una lista de miembros de la organización.
+    """
+    print(f"  Asignando árbitros para el torneo: {tournament.name}")
+
+    # 1. Filtrar los MIEMBROS de la organización que son elegibles para ser árbitros.
+    #    Un árbitro no puede ser un administrador de plataforma ni un organizador.
+    eligible_members = [
+        m for m in org_members
+        if not m.user.is_admin and not m.is_organizer
+    ]
+
+    # 2. De la lista de miembros elegibles, obtener los OBJETOS User.
+    potential_referee_users = [m.user for m in eligible_members]
+    
+    # 3. Determinar cuántos árbitros crear y seleccionarlos.
+    num_referees_to_create = random.randint(*count_range)
+    # No intentar tomar más árbitros de los que hay disponibles.
+    num_referees_to_create = min(num_referees_to_create, len(potential_referee_users))
+
+    if num_referees_to_create > 0:
+        # Seleccionar los usuarios que serán árbitros de la lista de usuarios elegibles.
+        selected_users = random.sample(potential_referee_users, num_referees_to_create)
+        
+        for user_ref in selected_users:
+            # Crear el registro en la tabla TournamentReferee.
+            referee = TournamentReferee(
+                tournament=tournament,
+                user=user_ref,  # Asignamos el objeto User.
+                assigned_by_user=organizer
+            )
+            db.session.add(referee)
+        print(f"    Asignados {len(selected_users)} árbitros.")
+
 def create_tournament_participants(tournament, org_members, organizer):
-    """Puebla un torneo con árbitros y equipos."""
+    """Puebla un torneo pendiente con árbitros y equipos usando jugadores elegibles."""
+    print(f"  Creando participantes para el torneo pendiente: {tournament.name}")
     
-    # 1. Asignar 2-4 árbitros
-    potential_referees = [m.user for m in org_members]
-    num_referees = random.randint(2, 4)
-    referees_to_add = random.sample(potential_referees, min(num_referees, len(potential_referees)))
+    # 1. Asignar árbitros (sin cambios en esta parte)
+    create_referees_for_tournament(tournament, org_members, organizer)
+    db.session.flush()
+
+    # 2. Obtener jugadores elegibles DESPUÉS de asignar árbitros
+    potential_players = get_potential_players_for_tournament(tournament)
     
-    for ref_user in referees_to_add:
-        referee = TournamentReferee(
-            tournament=tournament,
-            user=ref_user,
-            assigned_by_user=organizer
-        )
-        db.session.add(referee)
-
-    # 2. Crear equipos
-    # Usuarios que pueden participar (no son árbitros de este torneo)
-    referee_ids = {r.id for r in referees_to_add}
-    potential_players = [m.user for m in org_members if m.user.id not in referee_ids]
-    
-    # Inscribir entre 2 y (max_teams - 2) equipos
-    num_teams_to_create = random.randint(2, tournament.max_teams - 2)
-
-    for _ in range(num_teams_to_create):
-        if not potential_players:
-            break # No quedan jugadores disponibles
-        
-        # El líder del equipo
-        team_leader = random.choice(potential_players)
-        potential_players.remove(team_leader) # No puede estar en otro equipo
-
-        team = Team(
-            tournament=tournament,
-            name=f"{fake.company_prefix()} Gaming {fake.company_suffix()} {random.randint(1,100)}",
-            seed_score=random.randint(100, 2000)
-        )
-        db.session.add(team)
-        db.session.flush() # Obtener ID del equipo
-
-        # Añadir al líder como miembro
-        leader_member = TeamMember(team=team, user=team_leader, is_leader=True)
-        db.session.add(leader_member)
-
-        # Añadir más miembros (equipo completo o incompleto)
-        min_players = tournament.activity.min_players_per_team
-        # Hacemos que algunos equipos estén incompletos
-        players_to_add_count = random.randint(min_players // 2, min_players + 2)
-        
-        if len(potential_players) >= players_to_add_count:
-            other_members = random.sample(potential_players, players_to_add_count)
-            for member_user in other_members:
-                team_member = TeamMember(team=team, user=member_user, is_leader=False)
-                db.session.add(team_member)
-                potential_players.remove(member_user)
+    # 3. Crear equipos
+    # Inscribir entre 2 y (max_teams - 2) equipos, si hay jugadores
+    if potential_players and tournament.max_teams > 2:
+        num_teams_to_create = random.randint(2, max(2, tournament.max_teams - 2))
+        create_teams_for_tournament(tournament, potential_players, num_teams_to_create, prefix="Team Pendiente")

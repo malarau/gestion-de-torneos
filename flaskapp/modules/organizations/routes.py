@@ -32,7 +32,6 @@ def index():
         segment='Organizaciones'
     )
 
-#Página para editar una organización o crearla
 @org_bp.route('/manage/', methods=['GET', 'POST'])
 @org_bp.route('/manage/<int:organization_id>', methods=['GET', 'POST'])
 @login_required
