@@ -1,0 +1,95 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} {{ segment|capitalize }} {% endblock title %}
+{% block content %} 
+  
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+        <div class="row align-items-center py-4">
+            <div class="col-lg-6 col-7">
+            <!-- <h6 class="h2 text-white d-inline-block mb-0">{{ segment|capitalize }}</h6> -->
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                <li class="breadcrumb-item"><i class="fa-solid fa-sitemap" style="color: #7f6fc7;"></i></li>
+                <!-- Volver -->
+                <li class="breadcrumb-item">{{ segment|capitalize }}</li>
+                <li class="breadcrumb-item active" aria-current="page">
+                  <a href="{{ url_for('organizations_blueprint.detail', organization_id=organization_id) }}" >
+                    <strong>Volver</strong>
+                  </a>
+                </li>
+                </ol>
+            </nav>
+            </div>
+        </div>
+
+        {% include 'includes/flash_messages.html' %}
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-header border-0">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">Eventos de {{ events[0].organization_name if events else '' }} </h3>
+            </div>
+            {% if events and events[0].can_edit %}
+            <div class="col text-right">
+              <a href="{{ url_for('events_blueprint.manage', organization_id=organization_id) }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus mr-2"></i>Nuevo Evento
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-items-center table-flush">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Fechas</th>
+                <th scope="col">Estado</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <th scope="row">
+                  <a href="{{ url_for('events_blueprint.detail', organization_id=organization_id, event_id=event.id) }}">
+                    {{ event.name }}
+                  </a>
+                </th>
+                <td>
+                  {{ event.start_date }} al {{ event.end_date }}
+                </td>
+                <td>
+                  <span class="badge badge-{% if event.status == 'COMPLETED' %}success{% elif event.status == 'CANCELLED' %}danger{% elif event.status == 'IN_PROGRESS' %}info{% else %}primary{% endif %}">
+                    {{ event.status|replace('_', ' ')|title }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  {% if event.can_edit %}
+                  <a href="{{ url_for('events_blueprint.manage', organization_id=organization_id, event_id=event.id) }}" 
+                     class="btn btn-sm btn-neutral">Editar</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center">No hay eventos registrados</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
