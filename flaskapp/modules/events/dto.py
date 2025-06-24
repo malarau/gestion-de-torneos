@@ -21,3 +21,4 @@ class EventDetailDTO(EventDTO):
     updated_at: str
     tournaments_count: int
     status_options: List[dict]
+    tournaments: List[dict]

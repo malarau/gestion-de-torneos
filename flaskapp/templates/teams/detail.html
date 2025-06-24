@@ -84,40 +84,6 @@
                 </div>
             </div>
 
-             <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">Miembros del Equipo</h3>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        {% for member in members %}
-                        <div class="list-group-item list-group-item-action">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ member.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" 
-                                     class="avatar avatar-sm rounded-circle mr-3">
-                                <div>
-                                    <h5 class="mb-0">
-                                        {{ member.name }}
-                                        {% if member.is_leader %}
-                                        <span class="badge badge-primary ml-2">Líder</span>
-                                        {% endif %}
-                                    </h5>
-                                    <small class="text-muted">{{ member.email }}</small>
-                                    <small class="text-muted d-block">Se unió el {{ member.joined_at.strftime('%d/%m/%Y') }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="text-center text-muted py-3">
-                            No hay miembros en este equipo
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            
-            <!-- Después de la sección de miembros del equipo -->
             <!-- Sección de Partidos -->
             <div class="card mt-4"> 
                 <div class="card-header">
@@ -134,9 +100,12 @@
                                     <span class="badge badge-{{ 'primary' if match.status == 'PENDING' else 'success' }}">
                                         {{ 'Pendiente' if match.status == 'PENDING' else 'Finalizado' }}
                                     </span>
-                                    <small class="text-muted ml-2">
-                                        {% if match.level == 0 %}Final{% else %}Ronda {{ match.level }}{% endif %} • Partido #{{ match.match_number }}
-                                    </small>
+                                    <span class="ml-2">
+                                        <a href="{{ url_for('matches_blueprint.detail', organization_id=organization_id, tournament_id=tournament.id, match_id=match.id) }}">
+                                            {% if match.level == 0 %}Final{% else %}Ronda {{ match.level }}{% endif %} • Partido #{{ match.match_number }}
+                                        </a>
+                                        
+                                    </span>
                                 </div>
                                 
                                 <!-- Equipos y marcador -->
@@ -165,14 +134,18 @@
                                                 {{ match.team_b_score }}
                                             </span>
                                         </div>
-                                        <small class="text-muted mt-1">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                             <small class="text-muted mt-1">
                                             {{ match.completed_at.strftime('%d/%m/%Y %H:%M') if match.completed_at }}
-                                        </small>
+                                            </small>   
+                                        </div>
                                         {% else %}
-                                        <span class="display-3 font-weight-bold text-secondary">vs</span>
-                                        <small class="text-muted mt-1">
-                                            Por programar
-                                        </small>
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <span class="display-3 font-weight-bold text-secondary">vs</span>
+                                            <small class="text-muted mt-1">
+                                                Por programar
+                                            </small>
+                                        </div>
                                         {% endif %}
                                     </div>
                                     
@@ -189,15 +162,15 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Resultado para nuestro equipo -->
+                                <!-- Resultado respecto team_id -->
                                 <div class="text-center mt-2">
                                     {% if match.status == 'COMPLETED' %}
                                         {% if match.winner_id == team.id %}
-                                        <span class="badge badge-success">
+                                        <span class="badge badge-success h5 py-3 px-4">
                                             <i class="fas fa-trophy mr-1"></i>Victoria
                                         </span>
                                         {% elif match.winner_id %}
-                                        <span class="badge badge-danger">
+                                        <span class="badge badge-danger h5 py-3 px-4">
                                             <i class="fas fa-times-circle mr-1"></i>Derrota
                                         </span>
                                         {% endif %}
@@ -250,12 +223,45 @@
                         </div>
                         {% else %}
                         <div class="text-center text-muted py-3">
-                            No hay invitaciones pendientes
+                            No tienes invitaciones pendientes
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Miembros del Equipo</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for member in members %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ member.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" 
+                                     class="avatar avatar-sm rounded-circle mr-3">
+                                <div>
+                                    <h5 class="mb-0">
+                                        {{ member.name }}
+                                        {% if member.is_leader %}
+                                        <span class="badge badge-primary ml-2">Líder</span>
+                                        {% endif %}
+                                    </h5>
+                                    <small class="text-muted">{{ member.email }}</small>
+                                    <small class="text-muted d-block">Se unió el {{ member.joined_at.strftime('%d/%m/%Y') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted py-3">
+                            No hay miembros en este equipo
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

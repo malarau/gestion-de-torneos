@@ -1,0 +1,199 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Detalle del Partido</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('organizations_blueprint.detail', organization_id=organization_id) }}">Organización</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id) }}">Torneo</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Partido #{{ match.match_number }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    {% if is_referee %}
+                        <a href="{{ url_for('matches_blueprint.manage', organization_id=organization_id, tournament_id=tournament_id, match_id=match.id) }}" class="btn btn-sm btn-neutral">
+                            <i class="fas fa-edit mr-2"></i>Registrar/Editar Resultado
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% include 'includes/flash_messages.html' %}
+    </div>    
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">
+                            {% if match.level == 0 %}
+                                Gran Final
+                            {% elif match.level == 1 %}
+                                Semifinal
+                            {% elif match.level == 2 %}
+                                Cuartos de Final
+                            {% else %}
+                                Ronda {{ match.level }}
+                            {% endif %}
+                             • Partido #{{ match.match_number }}
+                        </h3>
+                        <span class="badge badge-lg badge-{{ 'success' if match.status == 'COMPLETED' else 'warning' if match.status == 'PENDING' else 'secondary' }}">
+                            {{ match.status_description }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="d-flex align-items-center justify-content-center my-3" style="width: 100%;">
+                            <div class="text-center mx-3" style="width: 280px;">
+                                <a href="#"> <img src="{{ match.team_a_leader.pic or url_for('static', filename='assets/img/theme/team-4.jpg') }}" 
+                                        class="avatar avatar-xl rounded-circle mb-2 border-primary">
+                                </a>
+                                <h4 class="mb-0" style="height: 2.5em; overflow: hidden;">{{ match.team_a_name or 'Equipo por definir' }}</h4>
+                                {% if match.team_a_leader %}
+                                <small class="text-primary">
+                                    <i class="fas fa-crown mr-1"></i>
+                                    <a href="{{ url_for('profile_blueprint.profile', user_id=match.team_a_leader.id) }}">{{ match.team_a_leader.name }}</a>
+                                </small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex flex-column align-items-center mx-4" style="width: 120px;">
+                                {% if match.status == 'COMPLETED' %}
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span class="display-3 font-weight-bold {{ 'text-success' if match.winner_id == match.team_a_id else 'text-danger' if match.winner_id else 'text-muted' }}">
+                                        {{ match.team_a_score }}
+                                    </span>
+                                    <span class="mx-2 display-4">-</span>
+                                    <span class="display-3 font-weight-bold {{ 'text-success' if match.winner_id == match.team_b_id else 'text-danger' if match.winner_id else 'text-muted' }}">
+                                        {{ match.team_b_score }}
+                                    </span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-center mt-2">
+                                     <small class="text-muted">
+                                        Finalizado el {{ match.completed_at.strftime('%d/%m/%Y') if match.completed_at }}
+                                    </small>   
+                                </div>
+                                {% else %}
+                                <div class="d-flex flex-column align-items-center justify-content-center">
+                                    <span class="display-2 font-weight-bold text-secondary">VS</span>
+                                    <small class="text-muted mt-2">
+                                        Pendiente
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="text-center mx-3" style="width: 280px;">
+                                <a href="#"> <img src="{{ match.team_b_leader.pic or url_for('static', filename='assets/img/theme/team-4.jpg') }}" 
+                                        class="avatar avatar-xl rounded-circle mb-2 border-primary">
+                                </a>
+                                <h4 class="mb-0" style="height: 2.5em; overflow: hidden;">{{ match.team_b_name or 'Equipo por definir' }}</h4>
+                                {% if match.team_b_leader %}
+                                <small class="text-primary">
+                                    <i class="fas fa-crown mr-1"></i>
+                                    <a href="{{ url_for('profile_blueprint.profile', user_id=match.team_b_leader.id) }}">{{ match.team_b_leader.name }}</a>
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if match.status == 'COMPLETED' %}
+                        <div class="text-center mt-4 p-3 bg-secondary rounded" style="width: 80%;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {% if match.best_player_name %}
+                                        <h5 class="mb-0">Jugador Destacado (MVP)</h5>
+                                        <img src="{{ match.best_player_pic or url_for('static', filename='assets/img/theme/team-4.jpg') }}" class="avatar avatar-sm rounded-circle mr-2 mt-2">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <a href="{{ url_for('profile_blueprint.profile', user_id=match.best_player_id) }}">{{ match.best_player_name }}</a>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    {% if match.recorded_by_referee_name %}
+                                        <h5 class="mb-0">Resultado Registrado por</h5>
+                                        <i class="fas fa-gavel text-muted mt-2 mr-2"></i>
+                                        <a href="{{ url_for('profile_blueprint.profile', user_id=match.recorded_by_referee_id) }}">{{ match.recorded_by_referee_name }}</a>
+                                    {% else %}
+                                        <small class="text-muted">Árbitro no asignado</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">Miembros de {{ match.team_a_name or 'Equipo A' }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                {% if match.team_a_members %}
+                                    {% for member in match.team_a_members %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <img alt="Image placeholder" src="{{ member.user.profile_picture or url_for('static', filename='assets/img/theme/team-4.jpg') }}" class="avatar rounded-circle mr-3">
+                                                <a href="{{ url_for('profile_blueprint.profile', user_id=member.user.id) }}">{{ member.user.name }}</a>
+                                            </div>
+                                            {% if member.is_leader %}
+                                                <span class="badge badge-pill badge-primary"><i class="fas fa-crown mr-1"></i>Líder</span>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li class="list-group-item text-center text-muted">No hay información de los miembros.</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">Miembros de {{ match.team_b_name or 'Equipo B' }}</h4>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                {% if match.team_b_members %}
+                                    {% for member in match.team_b_members %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <img alt="Image placeholder" src="{{ member.user.profile_picture or url_for('static', filename='assets/img/theme/team-4.jpg') }}" class="avatar rounded-circle mr-3">
+                                                <a href="{{ url_for('profile_blueprint.profile', user_id=member.user.id) }}">{{ member.user.name }}</a>
+                                            </div>
+                                            {% if member.is_leader %}
+                                                <span class="badge badge-pill badge-primary"><i class="fas fa-crown mr-1"></i>Líder</span>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                     <li class="list-group-item text-center text-muted">No hay información de los miembros.</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

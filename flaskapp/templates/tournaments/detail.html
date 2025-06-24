@@ -115,34 +115,48 @@
   </div>
 
   <div class="col-xl-4 order-xl-2">
-  <!-- Árbitros -->
+  <!-- Invitaciones Pendientes -->
   <div class="card mb-4">
     <div class="card-header">
       <div class="row align-items-center">
         <div class="col-8">
-          <h3 class="mb-0">Árbitros</h3>
+          <h3 class="mb-0">Mis Invitaciones</h3>
         </div>
         <div class="col-4 text-right">
-          <span class="badge badge-pill badge-primary">{{ tournament.referees|length }}</span>
+          <span class="badge badge-pill badge-primary">{{ pending_invitations|length }}</span>
         </div>
       </div>
     </div>
     <div class="card-body">
-      {% if tournament.referees %}
+      {% if pending_invitations %}
       <div class="list-group">
-        {% for referee in tournament.referees %}
+        {% for invitation in pending_invitations %}
         <div class="list-group-item list-group-item-action">
           <div class="row align-items-center">
             <div class="col-auto">
-              <img alt="{{ referee.name }}" src="{{ referee.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" class="avatar rounded-circle">
+              <img alt="{{ invitation.team.name }}" src="{{invitation.invited_by_user.profile_picture}}" class="avatar rounded-circle">
             </div>
             <div class="col ml--2">
-                <h4 class="mb-0 text-sm">
-                    <a href="{{ url_for('profile_blueprint.profile', user_id=referee.user_id) }}">
-                        {{ referee.name }}
-                    </a>
-                </h4>
-              <span class="text-muted">{{ referee.email }}</span>
+              <h4 class="mb-0 text-sm"><small>Equipo: </small>{{ invitation.team.name }}</h4>
+              <h4 class="mb-0 text-sm"><small>Invitado por: </small>
+                <a href="{{ url_for('profile_blueprint.profile', user_id=invitation.invited_by_user.id) }}">
+                    {{ invitation.invited_by_user.name }}
+                </a>
+              </h4>
+            </div>
+            <div class="col-auto mt-3 center">
+              <div class="btn-group">
+                <form method="POST" action="{{ url_for('tournaments_blueprint.accept_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check"></i> Aceptar
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('tournaments_blueprint.reject_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
+                  <button type="submit" class="btn btn-sm btn-danger ml-2">
+                    <i class="fas fa-times"></i> Rechazar
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -150,17 +164,59 @@
       </div>
       {% else %}
       <div class="text-center py-4">
-        <i class="fas fa-user-shield fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">No hay árbitros asignados</h5>
-        {% if tournament.can_edit %}
-        <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" class="btn btn-sm btn-primary mt-2">
-          Asignar Árbitros
-        </a>
-        {% endif %}
+        <i class="fas fa-envelope-open-text fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No tienes invitaciones pendientes</h5>
       </div>
       {% endif %}
     </div>
   </div>
+
+  <!-- Árbitros -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="row align-items-center">
+          <div class="col-8">
+            <h3 class="mb-0">Árbitros</h3>
+          </div>
+          <div class="col-4 text-right">
+            <span class="badge badge-pill badge-primary">{{ tournament.referees|length }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if tournament.referees %}
+        <div class="list-group">
+          {% for referee in tournament.referees %}
+          <div class="list-group-item list-group-item-action">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <img alt="{{ referee.name }}" src="{{ referee.profile_picture or '/static/assets/img/theme/team-1.jpg' }}" class="avatar rounded-circle">
+              </div>
+              <div class="col ml--2">
+                  <h4 class="mb-0 text-sm">
+                      <a href="{{ url_for('profile_blueprint.profile', user_id=referee.user_id) }}">
+                          {{ referee.name }}
+                      </a>
+                  </h4>
+                <span class="text-muted">{{ referee.email }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-user-shield fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No hay árbitros asignados</h5>
+          {% if tournament.can_edit %}
+          <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" class="btn btn-sm btn-primary mt-2">
+            Asignar Árbitros
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
 
   <!-- Equipos -->
   <div class="card">

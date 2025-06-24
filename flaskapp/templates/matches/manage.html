@@ -1,0 +1,194 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Editar Partido</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="{{ url_for('home_blueprint.index') }}"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id) }}">{{ tournament.name }}</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('matches_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id, match_id=match.id) }}">Partido #{{ match.match_number }}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Editar</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-lg-6 col-5 text-right">
+                    <a href="{{ url_for('matches_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id, match_id=match.id) }}" 
+                       class="btn btn-sm btn-neutral">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver al partido
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mt--6">
+    <div class="row">
+        <div class="col-xl-8 mx-auto">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                {% if match.level == 0 %}
+                                    Final
+                                {% elif match.level == 1 %}
+                                    Semifinal
+                                {% elif match.level == 2 %}
+                                    Cuartos de Final
+                                {% else %}
+                                    Ronda {{ match.level }}
+                                {% endif %}
+                                - Partido #{{ match.match_number }}
+                            </h3>
+                        </div>
+                        <div class="col text-right">
+                            <span class="badge badge-{{ 'success' if match.status == 'COMPLETED' else 'warning' }}">
+                                {{ match.status_description }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% include 'includes/flash_messages.html' %}
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Encabezado con equipos -->
+                        <div class="d-flex justify-content-between align-items-center mb-5">
+                            <div class="text-center" style="width: 40%;">
+                                <h4 class="mb-1">{{ match.team_a_name or 'Equipo A' }}</h4>
+                                {% if match.team_a_leader %}
+                                <small class="text-muted">
+                                    <i class="fas fa-crown text-primary mr-1"></i>
+                                    {{ match.team_a_leader.name }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="text-center mx-3">
+                                <h2 class="text-default">VS</h2>
+                            </div>
+                            
+                            <div class="text-center" style="width: 40%;">
+                                <h4 class="mb-1">{{ match.team_b_name or 'Equipo B' }}</h4>
+                                {% if match.team_b_leader %}
+                                <small class="text-muted">
+                                    <i class="fas fa-crown text-primary mr-1"></i>
+                                    {{ match.team_b_leader.name }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Puntuaciones -->
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label class="form-control-label">Puntuación {{ match.team_a_name or 'Equipo A' }}</label>
+                                    {{ form.score_team_a(class="form-control form-control-lg", placeholder="0") }}
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="h1 mt-4">-</div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label class="form-control-label">Puntuación {{ match.team_b_name or 'Equipo B' }}</label>
+                                    {{ form.score_team_b(class="form-control form-control-lg", placeholder="0") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Jugador Destacado -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-control-label">Jugador Destacado (MVP)</label>
+                                    {{ form.best_player_id(class="form-control") }}
+                                    <small class="form-text text-muted">
+                                        Selecciona al mejor jugador del partido (opcional)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Advertencia de edición -->
+                        {% if not can_edit %}
+                        <div class="alert alert-warning mt-4">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            {% if not is_referee %}
+                                Solo los árbitros del torneo pueden editar partidos.
+                            {% else %}
+                                Este partido no puede ser editado porque:
+                                <ul class="mt-2 mb-0">
+                                    {% if tournament.status.code != 'IN_PROGRESS' %}
+                                        <li>El torneo no está en progreso (actual: {{ tournament.status.description }})</li>
+                                    {% endif %}
+                                    {% set next_match = match.match_number // 2 %}
+                                    {% if next_match > 0 %}
+                                        <li>El siguiente partido en el bracket (#{{ next_match }}) ya ha sido jugado</li>
+                                    {% endif %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Botones -->
+                        <div class="row mt-5">
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn btn-primary px-5" {% if not can_edit %}disabled{% endif %}>
+                                    <i class="fas fa-save mr-2"></i>Guardar Cambios
+                                </button>
+                                <a href="{{ url_for('matches_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id, match_id=match.id) }}" 
+                                   class="btn btn-secondary px-5">
+                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Sección de información adicional -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Información del Torneo</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="fas fa-trophy mr-2"></i>Torneo:</strong> 
+                                {{ tournament.name }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-calendar-alt mr-2"></i>Estado:</strong>
+                                <span class="badge badge-{{ 'success' if tournament.status.code == 'IN_PROGRESS' else 'warning' }}">
+                                    {{ tournament.status.description }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong><i class="fas fa-gamepad mr-2"></i>Actividad:</strong> 
+                                {{ tournament.activity.name }}
+                            </p>
+                            <p class="mb-2">
+                                <strong><i class="fas fa-user-tie mr-2"></i>Árbitro:</strong> 
+                                {{ current_user.first_name }} {{ current_user.last_name }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -71,28 +71,28 @@ def seed_master_data():
     """Crea los registros en las tablas de estado y tipo."""
     statuses_data = {
         EventStatus: [
-            {'code': 'PLANNED', 'description': 'Evento planificado, aún no ha comenzado.'},
-            {'code': 'IN_PROGRESS', 'description': 'Evento en curso.'},
-            {'code': 'COMPLETED', 'description': 'Evento finalizado.'},
-            {'code': 'CANCELLED', 'description': 'Evento cancelado.'},
+            {'code': 'PLANNED', 'description': 'Evento planificado, aún no ha comenzado'},
+            {'code': 'IN_PROGRESS', 'description': 'Evento en curso'},
+            {'code': 'COMPLETED', 'description': 'Evento finalizado'},
+            {'code': 'CANCELLED', 'description': 'Evento cancelado'},
         ],
         TournamentStatus: [
-            {'code': 'REGISTRATION_OPEN', 'description': 'Inscripciones abiertas.'},
-            {'code': 'IN_PROGRESS', 'description': 'Torneo en curso.'},
-            {'code': 'COMPLETED', 'description': 'Torneo finalizado.'},
-            {'code': 'CANCELLED', 'description': 'Torneo cancelado.'},
+            {'code': 'REGISTRATION_OPEN', 'description': 'Inscripciones abiertas'},
+            {'code': 'IN_PROGRESS', 'description': 'Torneo en curso'},
+            {'code': 'COMPLETED', 'description': 'Torneo finalizado'},
+            {'code': 'CANCELLED', 'description': 'Torneo cancelado'},
         ],
         MatchStatus: [
-            {'code': 'PENDING', 'description': 'Partido pendiente de jugarse.'},
-            {'code': 'COMPLETED', 'description': 'Partido finalizado con resultado.'},
+            {'code': 'PENDING', 'description': 'Partido pendiente de jugarse'},
+            {'code': 'COMPLETED', 'description': 'Partido finalizado con resultado'},
         ],
         TeamInvitationStatus: [
-            {'code': 'PENDING', 'description': 'Invitación pendiente de respuesta.'},
-            {'code': 'ACCEPTED', 'description': 'Invitación aceptada.'},
-            {'code': 'REJECTED', 'description': 'Invitación rechazada.'},
+            {'code': 'PENDING', 'description': 'Invitación pendiente de respuesta'},
+            {'code': 'ACCEPTED', 'description': 'Invitación aceptada'},
+            {'code': 'REJECTED', 'description': 'Invitación rechazada'},
         ],
         NotificationType: [
-            {'code': 'TEAM_INVITE', 'description': 'Invitación a equipo.'}
+            {'code': 'TEAM_INVITE', 'description': 'Invitación a equipo'}
         ],
         RelatedEntityType: [
             {'name': 'Team'},

@@ -131,24 +131,35 @@ class TeamService:
 
     @staticmethod
     def get_eligible_members(tournament_id: int, team_id: int, search: str = None) -> List[EligibleMemberDTO]:
-        # Recuperar el torneo
         tournament = Tournament.query.get_or_404(tournament_id)
-        
-        # Obtener los IDs de los miembros existentes del equipo
+
+        # Subqueries para exclusión
         existing_members = db.session.query(TeamMember.user_id).filter_by(team_id=team_id).subquery()
-
-        # Obtener los IDs de los árbitros del torneo
-        existing_referees = db.session.query(TournamentReferee.user_id).filter_by(
-            tournament_id=tournament_id
-        ).subquery()
-
-        # Obtener los usuarios que ya están en otros equipos del torneo
+        existing_referees = db.session.query(TournamentReferee.user_id).filter_by(tournament_id=tournament_id).subquery()
         other_team_members = db.session.query(TeamMember.user_id).join(Team).filter(
             Team.tournament_id == tournament_id,
             Team.id != team_id
         ).subquery()
 
-        # Filtrar los miembros de la organización asociados al torneo
+        # Invitaciones
+        pending_status_id = TeamInvitationStatus.query.filter_by(code='PENDING').first().id
+        pending_invitation_ids = db.session.query(TeamInvitation.invited_user_id).filter(
+            TeamInvitation.team_id == team_id,
+            TeamInvitation.status_id == pending_status_id
+        ).subquery()
+
+        non_pending_invited_ids = db.session.query(TeamInvitation.invited_user_id).filter(
+            TeamInvitation.team_id == team_id,
+            TeamInvitation.status_id != pending_status_id
+        ).subquery()
+
+        # Organizadores de la organización
+        organization_organizers = db.session.query(OrganizationMember.user_id).filter(
+            OrganizationMember.organization_id == tournament.organization_id,
+            OrganizationMember.is_organizer == True
+        ).subquery()
+
+        # Consulta principal
         query = db.session.query(
             OrganizationMember,
             User
@@ -156,14 +167,15 @@ class TeamService:
             User,
             OrganizationMember.user_id == User.id
         ).filter(
-            OrganizationMember.organization_id == tournament.organization_id,  # Debe estar en la misma organización
-            OrganizationMember.user_id.notin_(existing_members),               # No debe ser miembro del equipo actual
-            OrganizationMember.user_id.notin_(existing_referees),              # No debe ser árbitro del torneo
-            OrganizationMember.user_id.notin_(other_team_members),            # No debe estar en otro equipo
-            User.is_admin == False                                            # No debe ser admin
+            OrganizationMember.organization_id == tournament.organization_id,
+            OrganizationMember.user_id.notin_(existing_members),
+            OrganizationMember.user_id.notin_(existing_referees),
+            OrganizationMember.user_id.notin_(other_team_members),
+            OrganizationMember.user_id.notin_(non_pending_invited_ids),
+            OrganizationMember.user_id.notin_(organization_organizers),  # ✅ Aquí filtramos organizadores
+            User.is_admin == False
         )
 
-        # Si se proporciona un término de búsqueda, filtramos también por nombre o email
         if search:
             query = query.filter(
                 db.or_(
@@ -172,24 +184,17 @@ class TeamService:
                 )
             )
 
-        # Ejecutar la consulta
         results = query.all()
 
-        # Obtener los IDs de los usuarios con invitaciones pendientes
-        pending_invitation_ids = [inv_id for (inv_id,) in db.session.query(TeamInvitation.invited_user_id).filter(
-            TeamInvitation.team_id == team_id,
-            TeamInvitation.status_id == TeamInvitationStatus.query.filter_by(code='PENDING').first().id
-        ).all()]
+        pending_ids = [inv_id for (inv_id,) in db.session.query(pending_invitation_ids).all()]
 
-
-        # Convertir los resultados a DTOs
         return [
             EligibleMemberDTO(
                 user_id=user.id,
                 name=user.name,
                 email=user.email,
                 profile_picture=user.profile_picture,
-                is_invited=user.id in pending_invitation_ids
+                is_invited=user.id in pending_ids
             ) for _, user in results
         ]
 

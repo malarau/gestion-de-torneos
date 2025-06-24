@@ -15,6 +15,7 @@ def register_blueprints(app):
     from flaskapp.modules.events.routes import events_bp
     from flaskapp.modules.tournaments.routes import tournaments_bp
     from flaskapp.modules.teams.routes import teams_bp
+    from flaskapp.modules.matches.routes import matches_bp
 
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(home_blueprint)
@@ -23,7 +24,8 @@ def register_blueprints(app):
     app.register_blueprint(activities_blueprint)
     app.register_blueprint(events_bp)
     app.register_blueprint(tournaments_bp)
-    app.register_blueprint(teams_bp)    
+    app.register_blueprint(teams_bp)
+    app.register_blueprint(matches_bp)
 
     # Add global blueprints as needed
     @app.errorhandler(403)

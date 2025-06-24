@@ -30,12 +30,15 @@ def index(organization_id):
 def detail(organization_id, tournament_id):
     tournament = TournamentService.get_tournament_detail(tournament_id, current_user.id)
     can_create_team = TournamentService.can_create_team(tournament_id, current_user.id)
+    pending_invitations = TournamentService.get_user_pending_invitations(tournament_id, current_user.id)
+    
     return render_template(
         'tournaments/detail.html',
         tournament=tournament,
         organization_id=organization_id,
         can_create_team=can_create_team,
         tournament_id=tournament_id,
+        pending_invitations=pending_invitations,
         segment='Torneos'
     )
 
@@ -96,3 +99,32 @@ def manage(organization_id, tournament_id=None):
         organization_id=organization_id,
         segment='Torneos'
     )
+
+
+@tournaments_bp.route('/<int:tournament_id>/invitations/<int:invitation_id>/accept', methods=['POST'])
+@login_required
+@organization_member_required()
+def accept_invitation(organization_id, tournament_id, invitation_id):
+    try:
+        TournamentService.accept_invitation(invitation_id, current_user.id)
+        flash('¡Invitación aceptada con éxito! Ahora eres parte del equipo.', 'success')
+    except ValueError as e:
+        flash(str(e), 'danger')
+    except Exception as e:
+        #flash('Ocurrió un error al procesar tu solicitud', 'danger')
+        flash(str(e), 'danger')
+    
+    return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))
+
+
+@tournaments_bp.route('/<int:tournament_id>/invitations/<int:invitation_id>/reject', methods=['POST'])
+@login_required
+@organization_member_required()
+def reject_invitation(organization_id, tournament_id, invitation_id):
+    try:
+        TournamentService.reject_invitation(invitation_id, current_user.id)
+        flash('Invitación rechazada', 'info')
+    except Exception:
+        flash('Ocurrió un error al procesar tu solicitud', 'danger')
+    
+    return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))

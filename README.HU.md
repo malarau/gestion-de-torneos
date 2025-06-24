@@ -206,6 +206,17 @@ Como usuario perteneciente a una organización, quiero inscribir un equipo a un 
 3. Al crear un equipo, se vuelve un integrante y líder del mismo automáticamente  
 4. Los equipos tienen identificadores (nombre) genéricos (puede cambiarse)
 
+### N.º 17 - Eliminación de equipos  
+**Historia:**  
+Como usuario perteneciente a una organización, quiero eliminar un equipo que haya creado anteriormente para disolver el equipo. 
+
+**Criterios de Aceptación**  
+**PH:** 6  
+1. Dentro de la vista del equipo, debe existir un botón para eliminar el equipo
+2. Solo el líder de equipo puede eliminar su propio equipo
+3. Todos los usuarios son liberados y pueden volver a unirse a otro equipo dentro del torneo
+4. Solo se permite eliminar si el torneo no ha comenzado aún
+
 ---
 
 ### N.º 17 - Invitación a miembros de equipo  

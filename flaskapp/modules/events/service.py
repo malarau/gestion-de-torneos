@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import List
-from flaskapp.database.models import Event, EventStatus, OrganizationMember
+from flaskapp.database.models import Event, EventStatus, OrganizationMember, Tournament
 from flaskapp.modules.events.dto import EventDTO, EventDetailDTO
 
 from flaskapp.database.models import db
@@ -41,7 +42,8 @@ class EventService:
             db.joinedload(Event.organization),
             db.joinedload(Event.status),
             db.joinedload(Event.creator),
-            db.joinedload(Event.tournaments)
+            db.joinedload(Event.tournaments).joinedload(Tournament.activity),
+            db.joinedload(Event.tournaments).joinedload(Tournament.status)
         ).get_or_404(event_id)
 
         is_organizer = OrganizationMember.query.filter_by(
@@ -51,6 +53,9 @@ class EventService:
         ).first() is not None
 
         status_options = EventStatus.query.order_by(EventStatus.id).all()
+
+        # Ordenar los torneos por fecha de inicio
+        sorted_tournaments = sorted(event.tournaments, key=lambda t: t.start_date or datetime.min)
 
         return EventDetailDTO(
             id=event.id,
@@ -66,7 +71,15 @@ class EventService:
             created_at=event.created_at.strftime('%Y-%m-%d'),
             updated_at=event.updated_at.strftime('%Y-%m-%d') if event.updated_at else '',
             tournaments_count=len(event.tournaments),
-            status_options=[{'code': s.code, 'description': s.description} for s in status_options]
+            status_options=[{'code': s.code, 'description': s.description} for s in status_options],
+            tournaments=[{
+                'id': t.id,
+                'name': t.name,
+                'activity_name': t.activity.name if t.activity else 'N/A',
+                'start_date': t.start_date.strftime('%Y-%m-%d') if t.start_date else 'N/A',
+                'end_date': t.end_date.strftime('%Y-%m-%d') if t.end_date else 'N/A',
+                'status': t.status.code
+            } for t in sorted_tournaments]
         )
 
     @staticmethod
