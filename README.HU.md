@@ -157,12 +157,13 @@ Como organizador, quiero iniciar el torneo, para que el sistema genere automáti
 **CRITERIOS DE ACEPTACIÓN**  
 **PH: 14**
 1. El organizador tiene una opción o botón para iniciar el torneo  
-2. El sistema genera el bracket de eliminación para los equipos inscritos  
-3. Los emparejamientos se basan en un algoritmo simple de puntaje derivado de los jugadores de cada equipo  
-4. El torneo deja de aceptar nuevas inscripciones  
-5. El torneo cambia su estado a “en curso”, “en juego” o algo similar  
-6. Se notifica a los participantes del inicio del torneo  
-7. Solo se incluyen en el torneo los equipos que cumplen con el requisito de integrantes  
+2. Solo se tienen en cuenta los equipos que cumplen con el requisito de integrantes definido por la Actividad, sistema debe validar que al menos sean 2
+3. El sistema genera el bracket de eliminación para los equipos inscritos  
+4. Los emparejamientos se basan en un algoritmo simple de puntaje derivado de los jugadores de cada equipo  
+5. El torneo deja de aceptar nuevas inscripciones  
+6. El torneo cambia su estado a “en curso”, “en juego” o algo similar  
+7. Se notifica a los participantes del inicio del torneo  
+  
 
 ### N.º 14 - Virtualización del bracket del torneo  
 **Historia:**  

@@ -92,10 +92,10 @@ def seed_master_data():
             {'code': 'REJECTED', 'description': 'Invitación rechazada'},
         ],
         NotificationType: [
-            {'code': 'TEAM_INVITE', 'description': 'Invitación a equipo'}
+            {'code': 'TEAM_INVITE', 'description': 'Invitación a equipo'},
+            {'code': 'TOURNAMENT_START', 'description': 'Invitación a equipo'}
         ],
         RelatedEntityType: [
-            {'name': 'Team'},
             {'name': 'Tournament'}
         ],
         ActivityCategory: [

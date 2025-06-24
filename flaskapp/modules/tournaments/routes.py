@@ -1,3 +1,4 @@
+from collections import defaultdict
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -32,6 +33,14 @@ def detail(organization_id, tournament_id):
     can_create_team = TournamentService.can_create_team(tournament_id, current_user.id)
     pending_invitations = TournamentService.get_user_pending_invitations(tournament_id, current_user.id)
     
+    matches = TournamentService.get_tournament_matches(tournament_id)
+    bracket_by_level = defaultdict(list)
+    for match in matches:
+        bracket_by_level[match.level].append(match)
+    bracket_by_level = dict(sorted(bracket_by_level.items(), reverse=True))
+    
+    print(f"\n\nBracket by level for tournament {tournament_id}: {bracket_by_level}\n\n")
+
     return render_template(
         'tournaments/detail.html',
         tournament=tournament,
@@ -39,6 +48,7 @@ def detail(organization_id, tournament_id):
         can_create_team=can_create_team,
         tournament_id=tournament_id,
         pending_invitations=pending_invitations,
+        bracket_by_level=bracket_by_level,
         segment='Torneos'
     )
 
@@ -111,8 +121,7 @@ def accept_invitation(organization_id, tournament_id, invitation_id):
     except ValueError as e:
         flash(str(e), 'danger')
     except Exception as e:
-        #flash('Ocurrió un error al procesar tu solicitud', 'danger')
-        flash(str(e), 'danger')
+        flash('Ocurrió un error al procesar tu solicitud', 'danger')
     
     return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))
 
