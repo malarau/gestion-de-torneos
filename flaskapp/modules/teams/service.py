@@ -15,6 +15,50 @@ TeamB = aliased(Team, name='team_b')
 
 class TeamService:
     @staticmethod
+    def calculate_team_seed(team_id):
+        """
+        Calculate the seed score for a team based on ALL its members' performance.
+        
+        Args:
+            team_id (int): ID of the team to calculate seed for
+        
+        Returns:
+            int: The calculated seed score
+        """
+        
+        team = Team.query.get_or_404(team_id)
+        total_seed = 0
+        
+        # Calcular para todos los miembros del equipo
+        for member in team.members:
+            # Get all matches this member has participated in (as part of any team)
+            user_matches = Match.query.join(
+                TeamMember, TeamMember.team_id == Match.team_a_id
+            ).filter(
+                TeamMember.user_id == member.user_id
+            ).union(
+                Match.query.join(
+                    TeamMember, TeamMember.team_id == Match.team_b_id
+                ).filter(
+                    TeamMember.user_id == member.user_id
+                )
+            ).all()
+            
+            # Calculate points from match wins
+            for match in user_matches:
+                if match.winner_id:
+                    # Check if the user was on the winning team
+                    user_teams_in_match = [tm.team_id for tm in member.user.team_memberships]
+                    if match.winner_id in user_teams_in_match:
+                        total_seed += 10  # 10 point for each match win
+                        
+                        # Check if this was a tournament final
+                        if match.level == 0:  # Assuming level 1 is the final
+                            total_seed += 15  # Bonus 15 points for tournament win
+        
+        return total_seed
+
+    @staticmethod
     def get_team_details(team_id: int) -> Team:
         return Team.query.get_or_404(team_id)
     
@@ -81,8 +125,15 @@ class TeamService:
         )
         db.session.add(leader)
 
-        db.session.commit()
-        return new_team
+        # Calculate initial seed score based on leader's performance
+        new_team.seed_score = TeamService.calculate_team_seed(new_team.id)
+        
+        try:
+            db.session.commit()
+            return new_team
+        except Exception as e:
+            db.session.rollback()
+            raise "Ha ocurrido un error al crear el equipo :("
 
     @staticmethod
     def get_team_members(team_id: int) -> List[TeamMemberDTO]:

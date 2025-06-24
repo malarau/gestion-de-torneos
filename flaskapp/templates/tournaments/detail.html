@@ -19,23 +19,30 @@
         <p class="text-white mt-0 mb-2">{{ tournament.description|truncate(100) if tournament.description else "Torneo competitivo" }}</p>
         
         <div class="d-flex align-items-center mt-3">
-          <span class="badge badge-{% if tournament.status == 'COMPLETED' %}success{% elif tournament.status == 'CANCELLED' %}danger{% else %}primary{% endif %}">
-            {{ tournament.status|replace('_', ' ')|title }}
+          <span class="badge badge-{% if tournament.status == 'COMPLETED' %}success{% elif tournament.status == 'CANCELLED' %}danger{% elif tournament.status == 'IN_PROGRESS' %}info{% else %}primary{% endif %}">
+            {{ tournament.status.replace('_', ' ').capitalize() }}
           </span>
-          
-          {% if tournament.is_team_creation_open %}
-          <span class="badge badge-success ml-2">Inscripciones Abiertas</span>
-          {% endif %}
         </div>
         
         <div class="mt-4">
 
-          {% if tournament.can_edit %}
-          <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
-             class="btn btn-warning">
-            <i class="fas fa-trophy mr-2"></i>Iniciar Torneo
-          </a>
-          {% endif %}
+            {% if tournament.can_edit %}
+              {% if tournament.status == 'REGISTRATION_OPEN' %}
+                <a href="{{ url_for('tournaments_blueprint.start_tournament', organization_id=organization_id, tournament_id=tournament.id) }}" 
+                  class="btn btn-warning"
+                  onclick="return confirm('¿Estás seguro que deseas iniciar el torneo?')">
+                    <i class="fas fa-trophy mr-2"></i>Iniciar Torneo
+                </a>
+              {% endif %}
+                
+              {% if tournament.status == 'REGISTRATION_OPEN' or tournament.status == 'IN_PROGRESS' %}
+                <a href="{{ url_for('tournaments_blueprint.cancel_tournament', organization_id=organization_id, tournament_id=tournament.id) }}" 
+                  class="btn btn-danger ml-2"
+                  onclick="return confirm('¿Estás seguro que deseas cancelar el torneo? Esta acción no se puede deshacer.')">
+                    <i class="fas fa-ban mr-2"></i>Cancelar Torneo
+                </a>
+              {% endif %}
+            {% endif %}
 
           {% if tournament.can_edit %}
           <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
@@ -51,6 +58,28 @@
           </a>
           {% endif %}
         </div>
+
+{% if tournament.status == 'COMPLETED' and bracket_by_level %}
+  {% set final_matches = bracket_by_level.get(0, []) %}
+  {% if final_matches %}
+    {% set final_match = final_matches[0] %}
+    {% if final_match.status == 'COMPLETED' and final_match.winner %}
+      <div class="winner-section mt-4 p-4 bg-gradient-success text-white rounded shadow">
+        <div class="d-flex align-items-center justify-content-center">
+          <i class="fas fa-trophy fa-3x mr-4"></i>
+          <div>
+            <h3 class="mb-1">¡Campeón del Torneo!</h3>
+            <h2 class="mb-0 font-weight-bold">{{ final_match.winner.name }}</h2>
+            <p class="mb-0 mt-2">
+              <i class="fas fa-medal mr-2"></i>Ganador de la final contra {{ final_match.opponent(final_match.winner).name }}
+            </p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+{% endif %}
+
 
         <div class="mt-3">
           {% include 'includes/flash_messages.html' %}
@@ -80,9 +109,9 @@
                     </p>
                     <p class="text-muted">
                         <strong><i class="fas fa-info-circle mr-2"></i>Estado:</strong>
-                        <span class="badge badge-{{ 'success' if tournament.status.code == 'REGISTRATION_OPEN' else 'warning' if tournament.status.code == 'IN_PROGRESS' else 'primary' if tournament.status.code == 'COMPLETED' else 'danger' }}">
-                            {{ tournament.status }}
-                        </span>
+                        <span class="badge badge-{% if tournament.status == 'COMPLETED' %}success{% elif tournament.status == 'CANCELLED' %}danger{% elif tournament.status == 'IN_PROGRESS' %}info{% else %}primary{% endif %}">
+                            {{ tournament.status.replace('_', ' ').capitalize() }}
+                          </span>
                     </p>
                 </div>
             </div>
@@ -205,6 +234,7 @@
 
   <div class="col-xl-4 order-xl-2">
   <!-- Invitaciones Pendientes -->
+  {% if not tournament.can_edit %}
   <div class="card mb-4">
     <div class="card-header">
       <div class="row align-items-center">
@@ -221,34 +251,40 @@
       <div class="list-group">
         {% for invitation in pending_invitations %}
         <div class="list-group-item list-group-item-action">
-          <div class="row align-items-center">
-            <div class="col-auto">
-              <img alt="{{ invitation.team.name }}" src="{{invitation.invited_by_user.profile_picture}}" class="avatar rounded-circle">
-            </div>
-            <div class="col ml--2">
-              <h4 class="mb-0 text-sm"><small>Equipo: </small>{{ invitation.team.name }}</h4>
-              <h4 class="mb-0 text-sm"><small>Invitado por: </small>
-                <a href="{{ url_for('profile_blueprint.profile', user_id=invitation.invited_by_user.id) }}">
-                    {{ invitation.invited_by_user.name }}
-                </a>
-              </h4>
-            </div>
-            <div class="col-auto mt-3 center">
-              <div class="btn-group">
-                <form method="POST" action="{{ url_for('tournaments_blueprint.accept_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
-                  <button type="submit" class="btn btn-sm btn-success">
-                    <i class="fas fa-check"></i> Aceptar
-                  </button>
-                </form>
-                <form method="POST" action="{{ url_for('tournaments_blueprint.reject_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
-                  <button type="submit" class="btn btn-sm btn-danger ml-2">
-                    <i class="fas fa-times"></i> Rechazar
-                  </button>
-                </form>
-              </div>
-            </div>
+        <!-- Fila: Foto + Detalle -->
+        <div class="row align-items-center mb-2">
+          <div class="col-auto">
+            <img alt="{{ invitation.team.name }}" src="{{ invitation.invited_by_user.profile_picture }}" class="avatar rounded-circle">
           </div>
-        </div>
+          <div class="col ml--2">
+            <h4 class="mb-0 text-sm"><small>Equipo: </small>{{ invitation.team.name }}</h4>
+            <h4 class="mb-0 text-sm"><small>Invitado por: </small>
+              <a href="{{ url_for('profile_blueprint.profile', user_id=invitation.invited_by_user.id) }}">
+                {{ invitation.invited_by_user.name }}
+              </a>
+            </h4>
+          </div>
+      </div>
+
+  <!-- Fila: Botones -->
+  <div class="row">
+    <div class="col text-right">
+      <div class="btn-group">
+        <form method="POST" action="{{ url_for('tournaments_blueprint.accept_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
+          <button type="submit" class="btn btn-sm btn-success">
+            <i class="fas fa-check"></i> Aceptar
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('tournaments_blueprint.reject_invitation', organization_id=organization_id, tournament_id=tournament.id, invitation_id=invitation.id) }}">
+          <button type="submit" class="btn btn-sm btn-danger ml-2">
+            <i class="fas fa-times"></i> Rechazar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
         {% endfor %}
       </div>
       {% else %}
@@ -259,6 +295,7 @@
       {% endif %}
     </div>
   </div>
+    {% endif %}
 
   <!-- Árbitros -->
     <div class="card mb-4">

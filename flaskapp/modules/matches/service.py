@@ -1,5 +1,7 @@
+from datetime import datetime
+import math
 from typing import Optional
-from flaskapp.database.models import Tournament, db
+from flaskapp.database.models import MatchStatus, Tournament, db
 from flaskapp.database.models import Match, Team, TournamentReferee, User
 from flaskapp.modules.matches.dto import MatchDTO
 from sqlalchemy.orm import joinedload
@@ -41,7 +43,7 @@ class MatchService:
                         'id': leader.id,
                         'pic': leader.profile_picture
                     }
-            return {'name': None, 'pic': None}
+            return {'name': None, 'id': None, 'pic': None}
 
         team_a_info = get_team_leader_info(team_a)
         team_b_info = get_team_leader_info(team_b)
@@ -57,7 +59,7 @@ class MatchService:
         # Obtener árbitro
         referee = User.query.get(match.recorded_by_referee_id) if match.recorded_by_referee_id else None
         referee_info = {
-            'name': f"{referee.first_name} {referee.last_name}" if referee else None,
+            'name': f"{referee.name}" if referee else None,
             'id': match.recorded_by_referee_id
         }
 
@@ -102,7 +104,7 @@ class MatchService:
                 players.extend([
                     {
                         'id': member.user.id,
-                        'name': f"{member.user.first_name} {member.user.last_name}",
+                        'name': f"{member.user.name}",
                         'team': team.name
                     }
                     for member in team.members
@@ -115,6 +117,11 @@ class MatchService:
         match = Match.query.get(match_id)
         if not match:
             return False
+        
+        # 0. Verificar que la partida cuente con 2 equipos y no sea un bye
+        # Si no tiene equipos asignados o es un bye, no se puede editar
+        if not match.team_a_id or not match.team_b_id or match.is_bye:
+            return False
 
         # 1. Verificar si el usuario es árbitro del torneo
         if not MatchService.is_user_tournament_referee(user_id, match.tournament_id):
@@ -124,8 +131,12 @@ class MatchService:
         tournament = Tournament.query.get(match.tournament_id)
         if tournament.status.code != 'IN_PROGRESS':
             return False
+        
+        # 3. Verificar estado del partido (no es CANCELLED)
+        if match.status.code == 'CANCELLED':
+            return False
 
-        # 3. Verificar siguiente partido en el bracket
+        # 4. Verificar siguiente partido en el bracket
         next_match_number = match.match_number // 2
         if next_match_number > 0:
             next_match = Match.query.filter_by(
@@ -140,8 +151,8 @@ class MatchService:
 
     @staticmethod
     def update_match(match_id: int, update_data: dict) -> bool:
-        """Actualiza un partido con validaciones"""
-        if not MatchService.can_edit_match(match_id):
+        """Actualiza un partido, determina ganador y propaga al siguiente si corresponde"""
+        if not MatchService.can_edit_match(match_id, update_data.get('user_id')):
             return False
 
         match = Match.query.get(match_id)
@@ -153,17 +164,60 @@ class MatchService:
             match.score_team_b = update_data.get('score_team_b')
             match.best_player_id = update_data.get('best_player_id')
             match.recorded_by_referee_id = update_data.get('recorded_by_referee_id')
-            
-            # Determinar ganador
-            if (update_data.get('score_team_a') is not None and 
-                update_data.get('score_team_b') is not None):
-                if update_data['score_team_a'] > update_data['score_team_b']:
+
+            # Obtener ID de estado 'COMPLETED'
+            completed_status = MatchStatus.query.filter_by(code='COMPLETED').first()
+            if not completed_status:
+                raise ValueError("Estado 'COMPLETED' no encontrado")
+
+            # Si ambos scores están presentes, marcar como completado
+            if match.score_team_a is not None and match.score_team_b is not None:
+                print(f"Marcando match {match.id} como completado", flush=True)
+                match.status_id = completed_status.id
+                match.completed_at = datetime.utcnow()
+
+                # Determinar ganador
+                if match.score_team_a > match.score_team_b:
                     match.winner_id = match.team_a_id
-                else:
+                elif match.score_team_b > match.score_team_a:
                     match.winner_id = match.team_b_id
+                else:
+                    # Empates no permitidos
+                    raise ValueError("No se permiten empates")
+
+                # Propagación al siguiente match (si no es final)
+                if match.level > 0 and match.winner_id:
+                    print(f"Actualizando siguiente partido para el match {match.id} (Nivel {match.level}, Match {match.match_number})", flush=True)
+                    next_match_number = match.match_number // 2
+                    next_level = match.level - 1
+
+                    next_match = Match.query.filter_by(
+                        tournament_id=match.tournament_id,
+                        level=next_level,
+                        match_number=next_match_number
+                    ).first()
+
+                    if next_match:
+                        print(f"Actualizando siguiente partido: {next_match.id} (Nivel {next_level}, Match {next_match_number})", flush=True)
+                        if match.match_number % 2 == 0:
+                            # par → posición izquierda (team_a)
+                            if next_match.team_a_id is None:
+                                next_match.team_a_id = match.winner_id
+                        else:
+                            # impar → posición derecha (team_b)
+                            if next_match.team_b_id is None:
+                                next_match.team_b_id = match.winner_id
+                    else:
+                        print(f"No se encontró el siguiente partido para el match {match.id} (Nivel {next_level}, Match {next_match_number})", flush=True)
+                else:
+                    print(f"Match {match.id} es final o no tiene ganador, no se propaga al siguiente match", flush=True)
+            else:
+                print(f"Match {match.id} no está completo, no se actualiza estado ni ganador", flush=True)
 
             db.session.commit()
             return True
-        except Exception:
+
+        except Exception as e:
             db.session.rollback()
+            print(f"Error actualizando match: {e}")
             return False

@@ -329,9 +329,9 @@ class Team(db.Model):
     matches_as_team_a = db.relationship('Match', foreign_keys='Match.team_a_id', backref='team_a', lazy=True)
     matches_as_team_b = db.relationship('Match', foreign_keys='Match.team_b_id', backref='team_b', lazy=True)
     won_matches = db.relationship('Match', foreign_keys='Match.winner_id', backref='winner_team', lazy=True)
-    
+        
     def __repr__(self):
-        return f'<Team {self.name}>'
+        return f'<Team id={self.id}, name="{getattr(self, "name", "?" )}">'
 
 class TeamMember(db.Model):
     __tablename__ = 'team_members'
@@ -380,7 +380,10 @@ class Match(db.Model):
             'winner_id IS NULL OR winner_id = team_a_id OR winner_id = team_b_id',
             name='check_winner_is_participant'
         ),
-        CheckConstraint('team_a_id IS DISTINCT FROM team_b_id', name='check_teams_are_distinct'),
+        CheckConstraint(
+            '(team_a_id IS NULL AND team_b_id IS NULL) OR (team_a_id IS DISTINCT FROM team_b_id)',
+            name='check_teams_null_or_distinct'
+        ),
         CheckConstraint(
             'NOT is_bye OR (team_a_id IS NOT NULL AND team_b_id IS NULL)',
             name='check_bye_has_only_team_a'
