@@ -76,3 +76,23 @@ class TournamentFormDTO:
     status_id: int
     event_id: Optional[int]
     organization_id: int  # Para contexto de permisos
+
+@dataclass
+class MatchTeamDTO:
+    id: int
+    name: str
+    seed_score: int
+
+@dataclass
+class MatchDTO:
+    id: int
+    level: int
+    match_number: int
+    team_a: Optional[MatchTeamDTO]
+    team_b: Optional[MatchTeamDTO]
+    score_team_a: Optional[int]
+    score_team_b: Optional[int]
+    winner_id: Optional[int]
+    status: str  # 'PENDING' o 'COMPLETED'
+    is_bye: bool
+    completed_at: Optional[str] 

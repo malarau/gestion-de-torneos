@@ -1,8 +1,8 @@
 from sqlalchemy import and_
 from sqlalchemy.orm import aliased
 from flask_login import current_user
-from flaskapp.database.models import TeamInvitationStatus, db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User, TeamInvitation, Team
-from flaskapp.modules.tournaments.dto import EligibleRefereeDTO, TeamDTO, TeamMemberDTO, TournamentDTO, TournamentDetailDTO
+from flaskapp.database.models import Match, TeamInvitationStatus, db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User, TeamInvitation, Team
+from flaskapp.modules.tournaments.dto import EligibleRefereeDTO, MatchDTO, MatchTeamDTO, TeamDTO, TeamMemberDTO, TournamentDTO, TournamentDetailDTO
 from typing import List
 
 class TournamentService:
@@ -412,3 +412,45 @@ class TournamentService:
         db.session.add(new_referee)
         db.session.commit()
         return 'added'
+    
+    @staticmethod
+    def get_tournament_matches(tournament_id: int) -> List[MatchDTO]:
+        """Obtiene todos los matches de un torneo con su información relevante"""
+        matches = Match.query.filter_by(tournament_id=tournament_id)\
+            .options(
+                db.joinedload(Match.team_a),
+                db.joinedload(Match.team_b),
+                db.joinedload(Match.status)
+            )\
+            .order_by(Match.level.desc(), Match.match_number.asc())\
+            .all()
+
+        result = []
+        for match in matches:
+            team_a_dto = MatchTeamDTO(
+                id=match.team_a.id,
+                name=match.team_a.name,
+                seed_score=match.team_a.seed_score
+            ) if match.team_a else None
+
+            team_b_dto = MatchTeamDTO(
+                id=match.team_b.id,
+                name=match.team_b.name,
+                seed_score=match.team_b.seed_score
+            ) if match.team_b else None
+
+            result.append(MatchDTO(
+                id=match.id,
+                level=match.level,
+                match_number=match.match_number,
+                team_a=team_a_dto,
+                team_b=team_b_dto,
+                score_team_a=match.score_team_a,
+                score_team_b=match.score_team_b,
+                winner_id=match.winner_id,
+                status=match.status.code,
+                is_bye=match.is_bye,
+                completed_at=match.completed_at.isoformat() if match.completed_at else None
+            ))
+        
+        return result

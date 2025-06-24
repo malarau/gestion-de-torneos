@@ -1,5 +1,11 @@
 {% extends "layouts/base.html" %}
 
+{% block stylesheets %}
+    {{ super() }} 
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/bracket.css') }}">
+{% endblock stylesheets %}
+
+
 {% block content %}
 <div class="header pb-6 d-flex align-items-center" 
      style="min-height: 500px; background-image: url(/static/assets/img/theme/tournament-bg.jpg); background-size: cover; background-position: center top;">
@@ -23,6 +29,14 @@
         </div>
         
         <div class="mt-4">
+
+          {% if tournament.can_edit %}
+          <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
+             class="btn btn-warning">
+            <i class="fas fa-trophy mr-2"></i>Iniciar Torneo
+          </a>
+          {% endif %}
+
           {% if tournament.can_edit %}
           <a href="{{ url_for('tournaments_blueprint.manage', organization_id=organization_id, tournament_id=tournament.id) }}" 
              class="btn btn-neutral">
@@ -103,12 +117,87 @@
             {% endif %}
 
             <!-- Sección de Brackets -->
-            <div class="mt-5">
-              <h4 class="mb-4">Estructura del Torneo</h4>
-              <div id="brackets-container" class="brackets-wrapper">
-                <canvas id="bracket-canvas" width="100%" height="500"></canvas>
+<div class="mt-5">
+  <h4 class="mb-4">Estructura del Torneo</h4>
+  <div id="brackets-container" class="tournament-brackets">
+    {% for level, matches in bracket_by_level.items() %}
+    <div class="bracket-level" data-level="{{ level }}">
+      <h2 class="round-title mb-3 p-2 text-center bg-dark text-white rounded">
+        {% if level == 0 %}Final
+        {% elif level == 1 %}Semifinales
+        {% elif level == 2 %}Cuartos de Final
+        {% elif level == 3 %}Octavos de Final
+        {% else %}Ronda {{ level }}{% endif %}
+      </h2>
+      
+      <div class="matches-container">
+        {% for match in matches|sort(attribute='match_number') %}
+        <a href="{{ url_for('matches_blueprint.detail', organization_id=organization_id, tournament_id=tournament.id, match_id=match.id) }}" class="text-decoration-none text-reset">
+          <div class="match 
+              {% if match.status == 'PENDING' %}pending
+              {% else %}completed{% endif %}
+              {% if match.is_bye %}bye-match{% endif %}"
+              {% if match.completed_at %}title="Jugado el {{ match.completed_at }}"{% endif %}
+              id="match-{{ match.id }}"
+              data-level="{{ match.level }}"
+              data-match-number="{{ match.match_number }}"
+              data-winner-id="{{ match.winner_id if match.winner_id else '' }}"
+              data-is-bye="{{ 'true' if match.is_bye else 'false' }}">
+              
+              <!-- TEAM A -->
+              <div class="team-line
+                  {% if match.status == 'PENDING' %} pending-line
+                  {% elif match.team_a and match.team_a.id == match.winner_id %} win
+                  {% elif match.team_a %} lose{% endif %}">
+                <div class="color-indicator"></div>
+                <div class="team-content">
+                  {% if match.team_a %}
+                    {% if match.team_a.id == match.winner_id %}
+                      <strong class="truncated">{{ match.team_a.name }}</strong>
+                    {% else %}
+                      <span class="muted truncated">{{ match.team_a.name }}</span>
+                    {% endif %}
+                    {% if match.score_team_a is not none %}
+                      <span class="score">{{ match.score_team_a }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="muted">{% if match.is_bye %}BYE{% else %}TBD{% endif %}</span>
+                  {% endif %}
+                </div>
               </div>
-            </div>
+            
+
+              <!-- TEAM B -->
+              <div class="team-line
+                  {% if match.status == 'PENDING' %} pending-line
+                  {% elif match.team_b and match.team_b.id == match.winner_id %} win
+                  {% elif match.team_b %} lose{% endif %}">
+                <div class="color-indicator"></div>
+                <div class="team-content">
+                  {% if match.team_b %}
+                    {% if match.team_b.id == match.winner_id %}
+                      <strong class="truncated">{{ match.team_b.name }}</strong>
+                    {% else %}
+                      <span class="muted truncated">{{ match.team_b.name }}</span>
+                    {% endif %}
+                    {% if match.score_team_b is not none %}
+                      <span class="score">{{ match.score_team_b }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="muted">{% if match.is_bye %}BYE{% else %}TBD{% endif %}</span>
+                  {% endif %}
+                </div>
+              </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+
           </div>
         </div>
       </div>
@@ -302,4 +391,5 @@
     // basado en los matches del torneo
   });
 </script>
+
 {% endblock %}
