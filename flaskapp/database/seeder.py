@@ -357,8 +357,8 @@ def create_completed_tournament(org, activities, organizers, status_completed, o
     create_completed_bracket(tournament, teams, end_date)
 
 
-def generate_name(generators): 
-    num_parts = random.randint(1, 3)
+def generate_name(generators):
+    num_parts = random.randint(1, 2)
     parts = random.sample(generators, num_parts)
     name = ' '.join(gen() for gen in parts)
     number = random.randint(1, 999)

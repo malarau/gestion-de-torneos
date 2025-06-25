@@ -54,7 +54,7 @@ Este módulo facilita la creación y administración de entidades organizadoras 
 
 ### N.º 5 - Creación de organizaciones  
 **HISTORIA**  
-Como administrador, quiero crear nuevas organizaciones para permitir a diferentes entidades gestionar sus propios torneos.  
+Como administrador, quiero crear nuevas organizaciones para permitir a diferentes entidades gestionar sus propios torneos.
 
 **CRITERIOS DE ACEPTACIÓN**  
 **PH: 5**
@@ -277,7 +277,7 @@ Como usuario de la organización, quiero visualizar mis estadísticas personales
 
 **Criterios de Aceptación**  
 **PH:** 5  
-1. El sistema debe mostrar al usuario su número de torneos jugados, victorias, derrotas y posición final promedio  
+1. El sistema debe mostrar al usuario su número de torneos jugados, victorias, derrotas, además de la actividad favorita y el rendimiento reciente. Por último un listado de los torneos recientes.
 2. Las estadísticas deben actualizarse automáticamente tras cada partida registrada  
 3. Debe permitir ver estadísticas filtradas por organización y por tipo de actividad  
 
@@ -303,7 +303,7 @@ Como usuario de la organización, quiero consultar estadísticas específicas de
 **Criterios de Aceptación**  
 **PH:** 3
 1. Debe mostrar total de equipos participantes, cantidad de partidas disputadas, y victorias por equipo  
-2. Debe listar el equipo campeón y subcampeón  
+2. Debe listar el equipo campeón y subcampeón
 
 ---
 

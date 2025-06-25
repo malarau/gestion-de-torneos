@@ -100,10 +100,155 @@
         </div>
       </div>
       {% endif %}
+
+
+    <!-- CONTINUAR ACÁ CON LA MAGIA! BLOQUES ATRACTIVOS ESTADÍSTICOS EN BASE A LOS MODELOS EXISTENTES -->
+      <!-- Estadísticas de Torneos -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Estadísticas de Torneos</h3>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Torneos jugados -->
+            <div class="col-md-4">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Torneos Jugados</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ profile.stats.tournaments_played }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                        <i class="ni ni-trophy"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Victorias -->
+            <div class="col-md-4">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Victorias</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ profile.stats.matches_won }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-like-2"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Derrotas -->
+            <div class="col-md-4">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Derrotas</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ profile.stats.matches_lost }}</span>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                        <i class="ni ni-fat-remove"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Otras estadísticas -->
+          <div class="row mt-4">
+            <!-- Actividad favorita -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Actividad Favorita</h5>
+                  {% if profile.stats.favorite_activity %}
+                  <div class="d-flex align-items-center">
+                    <div class="icon icon-shape bg-gradient-info text-white rounded-circle mr-3">
+                      <i class="ni ni-favourite-28"></i>
+                    </div>
+                    <div>
+                      <h4 class="mb-0">{{ profile.stats.favorite_activity }}</h4>
+                      <small class="text-muted">Participó en {{ profile.stats.favorite_activity_count }} torneos</small>
+                    </div>
+                  </div>
+                  {% else %}
+                  <p class="text-muted">No hay datos suficientes</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Rendimiento reciente -->
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Rendimiento Reciente</h5>
+                  <div class="d-flex justify-content-between">
+                    <div class="text-center">
+                      <h3 class="text-success">{{ profile.stats.win_rate }}%</h3>
+                      <small class="text-muted">Tasa de victorias</small>
+                    </div>
+                    <div class="text-center">
+                      <h3>{{ profile.stats.referee_count }}</h3>
+                      <small class="text-muted">Veces como árbitro</small>
+                    </div>
+                    <div class="text-center">
+                      <h3>{{ profile.stats.leader_count }}</h3>
+                      <small class="text-muted">Equipos liderados</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Últimos torneos -->
+          <!-- Últimos torneos -->
+          {% if profile.stats.recent_tournaments %}
+          <div class="mt-4">
+            <h5>Últimos Torneos Participados</h5>
+            <div class="list-group">
+              {% for tournament in profile.stats.recent_tournaments %}
+              <a href="{{ url_for('tournaments_blueprint.detail', organization_id=tournament.organization_id, tournament_id=tournament.id) }}" 
+                 class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 class="mb-1">{{ tournament.name }}</h6>
+                    <small class="text-muted">{{ tournament.organization_name }}</small>
+                  </div>
+                  <span class="badge badge-{{ 'success' if tournament.status == 'COMPLETED' else 'info' }}">
+                    {{ tournament.status_display }}
+                  </span>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          
+
+        </div>
+      </div> 
+
+
+
+
     </div>
   </div>
-
-  {% include "includes/footer.html" %}
 
 </div>
 

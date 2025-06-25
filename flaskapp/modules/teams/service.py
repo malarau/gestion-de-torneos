@@ -314,9 +314,15 @@ class TeamService:
     @staticmethod
     def update_team(team_id: int, name: str):
         team = Team.query.get_or_404(team_id)
+
+        # Validar que el torneo aún esté en estado 'REGISTRATION_OPEN'
+        if team.tournament.status.code != 'REGISTRATION_OPEN':
+            raise ValueError("El equipo no puede ser modificado porque el torneo ya ha comenzado")
+
         team.name = name
         db.session.commit()
         return team
+
 
     @staticmethod
     def delete_team(team_id: int):
