@@ -150,7 +150,7 @@ Como organizador, quiero editar los detalles de un torneo creado, para realizar 
 3. Debe permitir reasignar árbitros, siempre que estos no sean participantes  
 4. Los cambios deben persistir en la base de datos y reflejarse en la interfaz  
 
-### N.º 13 - Inicio de torneo  
+### N.º 13 - Inicio de torneo
 **HISTORIA**  
 Como organizador, quiero iniciar el torneo, para que el sistema genere automáticamente los emparejamientos y comience la competición  
 
@@ -283,15 +283,16 @@ Como usuario de la organización, quiero visualizar mis estadísticas personales
 
 ---
 
-### N.º 21 - Estadísticas por actividad  
-**Historia:**  
-Como usuario de la organización, quiero visualizar estadísticas agrupadas por tipo de actividad, para analizar tendencias de participación y desempeño en las diferentes disciplinas  
+### N.º 21 - Estadísticas de plataforma
+**Historia:**
+Como administrador de la plataforma, quiero visualizar estadísticas generales de los diferentes contextos del sistema
 
 **Criterios de Aceptación**  
 **PH:** 6  
-1. El sistema debe mostrar métricas sobre la cantidad de torneos realizados por cada tipo de actividad  
-2. Debe permitir identificar las actividades más populares en base a participación  
-3. Debe presentar estadísticas sobre número de equipos y participantes promedio por actividad  
+1. El sistema debe mostrar métricas sobre la cantidad de usuarios, organizaciones, torneos y equipos
+2. Para cada uno de los elementos, debe mostrar la variación porcentual respecto del último mes
+3. Debe presentar una gráfica para mostrar los nuevos usuarios respecto del último tiempo
+4. Debe mostrar los torneos realizados para las actividades más populares???? ----------------------------sasdsadsdfsdffffffffffffffffffffffffffffffff
 
 ---
 
