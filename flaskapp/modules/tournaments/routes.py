@@ -92,6 +92,8 @@ def detail(organization_id, tournament_id):
         segment='Torneos'
     )
 
+
+    
 @tournaments_bp.route('/manage', methods=['GET', 'POST'])
 @tournaments_bp.route('/manage/<int:tournament_id>', methods=['GET', 'POST'])
 @login_required

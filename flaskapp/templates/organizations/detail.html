@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="header pb-6 d-flex align-items-center" 
-     style="min-height: 500px; background-image: url(/static/assets/img/theme/profile-cover.jpg); background-size: cover; background-position: center top;">
+     style="min-height: 500px; background-image: url(/static/assets/img/theme/organization_profile.jpeg); background-size: cover; background-position: center bottom;">
   <!-- Mask -->
   <span class="mask bg-gradient-default opacity-8"></span>
   <!-- Header container -->
@@ -28,6 +28,11 @@
             <i class="fas fa-plus mr-2"></i>Crear Torneo
           </a>
         {% endif %}
+
+        <a href="{{ url_for('organizations_blueprint.index', organization_id=org.id) }}" 
+            class="btn btn-neutral">
+          <i class="fas fa-arrow-left mr-2"></i>Volver atrás
+        </a>
         </div>
 
         <div class="mt-3">

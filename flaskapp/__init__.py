@@ -17,6 +17,7 @@ def register_blueprints(app):
     from flaskapp.modules.tournaments.routes import tournaments_bp
     from flaskapp.modules.teams.routes import teams_bp
     from flaskapp.modules.matches.routes import matches_bp
+    from flaskapp.modules.notifications.routes import notifications_bp
 
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(home_blueprint)
@@ -27,6 +28,7 @@ def register_blueprints(app):
     app.register_blueprint(tournaments_bp)
     app.register_blueprint(teams_bp)
     app.register_blueprint(matches_bp)
+    app.register_blueprint(notifications_bp)
 
     # Add global blueprints as needed
     @app.errorhandler(403)
@@ -38,6 +40,21 @@ def register_blueprints(app):
     @app.errorhandler(500)
     def internal_error(error, msg=None):
         return render_template('home/page-500.html', msg=msg), 500
+    
+    @app.context_processor
+    def inject_notifications():
+        def has_unread_notifications(c_id: int) -> dict:
+            from flaskapp.database.models import Notification
+            unread_count = Notification.query.filter_by(
+                user_id=str(c_id),
+                is_read=False
+            ).count()
+            print(f"Unread notifications for user {c_id}: {unread_count}", flush=True)
+            return {
+                'has_unread': unread_count > 0,
+                'count': unread_count
+            }
+        return {'has_unread_notifications': has_unread_notifications}
 
 def create_app():
 
