@@ -201,12 +201,10 @@ class MatchService:
                         print(f"Actualizando siguiente partido: {next_match.id} (Nivel {next_level}, Match {next_match_number})", flush=True)
                         if match.match_number % 2 == 0:
                             # par → posición izquierda (team_a)
-                            if next_match.team_a_id is None:
-                                next_match.team_a_id = match.winner_id
+                            next_match.team_a_id = match.winner_id
                         else:
                             # impar → posición derecha (team_b)
-                            if next_match.team_b_id is None:
-                                next_match.team_b_id = match.winner_id
+                            next_match.team_b_id = match.winner_id
                     else:
                         print(f"No se encontró el siguiente partido para el match {match.id} (Nivel {next_level}, Match {next_match_number})", flush=True)
                 else:

@@ -8,6 +8,14 @@
 -- SECCIÓN 1: Funciones
 -- ##############################
 
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Función para manejar Byes al crear partidos
 
 -- Función: trigger_set_timestamp()
@@ -69,6 +77,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Función para enviar notificaciones
 CREATE OR REPLACE FUNCTION send_notification(
@@ -213,9 +222,8 @@ CREATE TRIGGER set_timestamp_team_invitations
 DROP TRIGGER IF EXISTS new_match_trigger ON matches;
 DROP TRIGGER IF EXISTS bye_propagation_trigger ON matches;
 DROP TRIGGER IF EXISTS notify_team_invitation_trigger ON team_invitations;
-DROP TRIGGER IF EXISTS notify_tournament_in_progress ON tournaments;
+DROP TRIGGER IF EXISTS notify_tournament_in_progress_trigger ON tournaments;
 
--- Crear triggers funcionales
 CREATE TRIGGER new_match_trigger
     BEFORE INSERT ON matches
     FOR EACH ROW EXECUTE FUNCTION handle_new_match();
@@ -228,7 +236,7 @@ CREATE TRIGGER notify_team_invitation_trigger
     AFTER INSERT ON team_invitations
     FOR EACH ROW EXECUTE FUNCTION notify_team_invitation();
 
-CREATE TRIGGER notify_tournament_in_progress
+CREATE TRIGGER notify_tournament_in_progress_trigger
     AFTER UPDATE OF status_id ON tournaments
     FOR EACH ROW
     EXECUTE FUNCTION notify_tournament_in_progress();
