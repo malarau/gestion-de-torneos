@@ -25,6 +25,48 @@ def index(organization_id):
         segment='Torneos'
     )
 
+@tournaments_bp.route('/<int:tournament_id>/cancel', methods=['GET'])
+@login_required
+@organization_member_required()
+def cancel_tournament(organization_id, tournament_id):
+    tournament = TournamentService.get_tournament_detail(tournament_id, current_user.id)
+    
+    if not tournament:
+        flash('Torneo no encontrado', 'danger')
+        return redirect(url_for('tournaments_blueprint.index', organization_id=organization_id))
+    
+    try:
+        TournamentService.cancel_tournament(tournament_id)
+        flash('Torneo cancelado exitosamente', 'success')
+    except ValueError as e:
+        flash(str(e), 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error canceling tournament: {str(e)}")
+        flash('Ocurrió un error al cancelar el torneo', 'danger')
+    
+    return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))
+
+@tournaments_bp.route('/<int:tournament_id>/start', methods=['GET'])
+@login_required
+@organization_member_required()
+def start_tournament(organization_id, tournament_id):
+    tournament = TournamentService.get_tournament_detail(tournament_id, current_user.id)
+    
+    if not tournament:
+        flash('Torneo no encontrado', 'danger')
+        return redirect(url_for('tournaments_blueprint.index', organization_id=organization_id))
+    
+    try:
+        TournamentService.start_tournament(tournament_id)
+        flash('Torneo iniciado exitosamente', 'success')
+    except ValueError as e:
+        flash(str(e), 'danger')
+    except Exception as e:
+        current_app.logger.error(f"Error starting tournament: {str(e)}")
+        flash('Ocurrió un error al iniciar el torneo', 'danger')
+    
+    return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))
+
 @tournaments_bp.route('/<int:tournament_id>')
 @login_required
 @organization_member_required()
@@ -38,8 +80,6 @@ def detail(organization_id, tournament_id):
     for match in matches:
         bracket_by_level[match.level].append(match)
     bracket_by_level = dict(sorted(bracket_by_level.items(), reverse=True))
-    
-    print(f"\n\nBracket by level for tournament {tournament_id}: {bracket_by_level}\n\n")
 
     return render_template(
         'tournaments/detail.html',
@@ -139,3 +179,5 @@ def reject_invitation(organization_id, tournament_id, invitation_id):
         flash('Ocurrió un error al procesar tu solicitud', 'danger')
     
     return redirect(url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament_id))
+
+

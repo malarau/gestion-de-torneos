@@ -69,13 +69,6 @@ class TournamentForm(FlaskForm):
             if field.data < self.start_date.data:
                 raise ValidationError('La fecha de finalización debe ser posterior a la de inicio')
 
-    def validate_start_date(self, field):
-        """Validar que la fecha de inicio no sea en el pasado"""
-        if field.data:
-            # Comparar solo la parte de fecha (ignorando hora)
-            if field.data < date.today():
-                raise ValidationError('La fecha de inicio no puede ser en el pasado')
-
     @staticmethod
     def _is_power_of_two(n):
         """Helper method to check if a number is power of two"""

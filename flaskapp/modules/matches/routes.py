@@ -51,6 +51,14 @@ def manage(organization_id, tournament_id, match_id):
 
     # Verificar condiciones para edición
     can_edit = MatchService.can_edit_match(match_id, current_user.id)
+    if not can_edit: # Cualquier motivo
+        # Si no se puede editar, reenviar al detalle del partido
+        flash('No tienes permisos para editar este partido', 'danger')
+        return redirect(url_for('matches_blueprint.detail',
+                                organization_id=organization_id,
+                                tournament_id=tournament_id,
+                                match_id=match_id))
+
     if request.method == 'POST' and not can_edit:
         flash('No es posible editar este partido en este momento', 'danger')
         return redirect(url_for('matches_blueprint.detail', 
@@ -66,11 +74,14 @@ def manage(organization_id, tournament_id, match_id):
 
     if form.validate_on_submit() and can_edit:
         update_data = {
+            'user_id': current_user.id,
             'score_team_a': form.score_team_a.data,
             'score_team_b': form.score_team_b.data,
             'best_player_id': form.best_player_id.data if form.best_player_id.data != 0 else None,
             'recorded_by_referee_id': current_user.id
         }
+
+        print(f"Updating match {match_id} with data: {update_data}", flush=True)
 
         if MatchService.update_match(match_id, update_data):
             flash('Resultados actualizados correctamente', 'success')
