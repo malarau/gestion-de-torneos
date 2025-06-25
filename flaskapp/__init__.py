@@ -70,7 +70,7 @@ def create_app():
     # Create database tables and seed data
     with app.app_context():
         db.create_all()   # Creates tables for ALL modules' models   
-        seed_functions_and_triggers(app)  # Insert base data required for system operation
+        #seed_functions_and_triggers(app)  # Insert base data required for system operation
         # Seed the database with test data
         seed_db_command(app)
 
