@@ -58,15 +58,21 @@
                     <tr>
                     <td>
                         <a href="{{ url_for('tournaments_blueprint.detail', organization_id=organization_id, tournament_id=tournament.id) }}">
-                        {{ tournament.name }}
+                        <i class="fas fa-trophy text-warning mr-1"></i>{{ tournament.name }}
                         </a>
                     </td>
                     <td>{{ tournament.activity_name }}</td>
                     <td>{{ tournament.start_date }} al {{ tournament.end_date }}</td>
                     <td>{{ tournament.team_count }}/{{ tournament.max_teams }}</td>
                     <td>
-                        <span class="badge badge-{% if tournament.status == 'completed' %}success{% elif tournament.status == 'cancelled' %}danger{% else %}info{% endif %}">
-                        {{ tournament.status|title }}
+                        <span class="badge 
+                            badge-{% if tournament.status == 'REGISTRATION_OPEN' %}primary text-dark
+                            badge-{% elif tournament.status == 'IN_PROGRESS' %}info text-dark
+                            badge-{% elif tournament.status == 'COMPLETED' %}success text-dark
+                            badge-{% elif tournament.status == 'CANCELLED' %}danger text-dark
+                            badge-{% else %}bg-secondary text-dark
+                            {% endif %}">
+                            {{ tournament.status|replace('_', ' ')|title }}
                         </span>
                     </td>
                     <td class="text-right">

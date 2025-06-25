@@ -196,7 +196,7 @@ Este módulo facilita la formación de equipos para participar en los torneos. L
 
 ---
 
-### N.º 16 - Creación de equipos  
+### N.º 16 - Creación de equipos
 **Historia:**  
 Como usuario perteneciente a una organización, quiero inscribir un equipo a un torneo perteneciente a la misma organización para invitar a otros usuarios y participar del torneo.  
 
@@ -300,7 +300,7 @@ Como usuario de la organización, quiero visualizar estadísticas agrupadas por 
 Como usuario de la organización, quiero consultar estadísticas específicas de un torneo, para evaluar la participación y el desempeño dentro del mismo  
 
 **Criterios de Aceptación**  
-**PH:** *(no especificado)*  
+**PH:** 3
 1. Debe mostrar total de equipos participantes, cantidad de partidas disputadas, y victorias por equipo  
 2. Debe listar el equipo campeón y subcampeón  
 
@@ -354,7 +354,7 @@ Como usuario autenticado perteneciente a una organización, quiero visualizar el
 Como árbitro asignado a un torneo, quiero poder registrar el resultado de una partida que me fue asignada y el mejor jugador de la misma, para que el sistema determine qué equipo avanza a la siguiente fase del torneo.
 
 **Criterios de Aceptación**  
-**PH:** 7  
+**PH:** 7
 
 1. Solo el árbitro asignado al torneo puede ingresar al formulario de registro de resultados.  
 2. El árbitro debe registrar el puntaje de cada equipo y seleccionar del mejor jugador (entre los participantes de la partida)

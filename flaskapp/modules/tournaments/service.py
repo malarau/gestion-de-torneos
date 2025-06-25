@@ -1,11 +1,293 @@
+import math
 from sqlalchemy import and_
+from typing import Any, Tuple
 from sqlalchemy.orm import aliased
 from flask_login import current_user
-from flaskapp.database.models import Match, TeamInvitationStatus, db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User, TeamInvitation, Team
+from flaskapp.database.models import Match, MatchStatus, TeamInvitationStatus, TournamentStatus, db, OrganizationMember, Team, TeamMember, Tournament, TournamentReferee, User, TeamInvitation, Team
+from flaskapp.modules.teams.service import TeamService
 from flaskapp.modules.tournaments.dto import EligibleRefereeDTO, MatchDTO, MatchTeamDTO, TeamDTO, TeamMemberDTO, TournamentDTO, TournamentDetailDTO
-from typing import List
+from typing import Dict, List
+
+class TournamentGenerator:
+    """
+    Genera brackets de torneo de eliminación simple con cabezas de serie y byes.
+    TODA la lógica opera con diccionarios de Python para mantenerse desacoplada de la BD.
+    """
+    
+    @staticmethod
+    def _calculate_bracket_size(team_count: int) -> Tuple[int, int]:
+        """Calcula el tamaño del bracket y el número de byes necesarios."""
+        if team_count < 2:
+            raise ValueError("Se requieren al menos dos equipos para un torneo.")
+        
+        bracket_size = 2 ** math.ceil(math.log2(team_count))
+        byes_count = bracket_size - team_count
+        return bracket_size, byes_count
+
+    @staticmethod
+    def _seed_teams(teams: List['Team']) -> List['Team']:
+        """Ordena los equipos por seed_score (los mejores primero)."""
+        return sorted(teams, key=lambda x: x.seed_score, reverse=True)
+
+    @staticmethod
+    def _create_initial_matches(
+        sorted_teams: List['Team'],
+        level: int,
+        byes_count: int,
+        pending_status_id: int,
+        completed_status_id: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Crea los diccionarios que representan las partidas iniciales de la primera ronda.
+        Maneja tanto partidas regulares como byes.
+        """
+        matches = []
+        
+        # Crear partidas de bye (victorias automáticas para los mejores seeds)
+        for i in range(byes_count):
+            bye_team = sorted_teams[i]
+            matches.append({
+                "level": level,
+                "match_number": 0,  # Temporal, se asignará correctamente después
+                "team_a_id": bye_team.id,
+                "team_b_id": None,
+                "is_bye": True,
+                "status_id": 2,
+                "winner_id": bye_team.id
+            })
+        
+        # Crear partidas regulares para los equipos restantes
+        remaining_teams = sorted_teams[byes_count:]
+        for i in range(0, len(remaining_teams), 2):
+            team_a = remaining_teams[i]
+            team_b = remaining_teams[i + 1] if i + 1 < len(remaining_teams) else None
+            
+            matches.append({
+                "level": level,
+                "match_number": 0,  # Temporal
+                "team_a_id": team_a.id,
+                "team_b_id": team_b.id if team_b else None,
+                "is_bye": False,
+                "status_id": pending_status_id
+            })
+            
+        return matches
+
+    @staticmethod
+    def _assign_match_numbers(matches: List[Dict[str, Any]], level: int) -> List[Dict[str, Any]]:
+        """
+        Asigna los números de partida correctos siguiendo los patrones de seeding del torneo.
+        """
+        if not matches:
+            return []
+            
+        num_matches_in_level = len(matches)
+        base_match_number = 2**level
+        
+        # Standard Seeding Order (e.g., for 8 slots: 1 vs 8, 4 vs 5, 2 vs 7, 3 vs 6)
+        # This simplified assignment ensures unique numbers per level.
+        # A more complex algorithm could be used for precise bracket placement.
+        for i, match in enumerate(matches):
+            match['match_number'] = base_match_number + i
+
+        return sorted(matches, key=lambda m: m['match_number'])
+
+    @staticmethod
+    def generate_initial_matches(
+        teams: List['Team'], 
+        pending_status_id: int, 
+        completed_status_id: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Genera una lista de diccionarios para la primera ronda de partidas del torneo.
+        """
+        if len(teams) < 2:
+            raise ValueError("Se necesitan al menos dos equipos para generar partidas.")
+            
+        sorted_teams = TournamentGenerator._seed_teams(teams)
+        bracket_size, byes_count = TournamentGenerator._calculate_bracket_size(len(teams))
+        
+        # El nivel inicial es el más alto (ej: para 8 equipos, size=8, log2(8)=3, nivel=2)
+        level = int(math.log2(bracket_size)) - 1 if bracket_size > 1 else 0
+
+        matches = TournamentGenerator._create_initial_matches(
+            sorted_teams, level, byes_count, pending_status_id, completed_status_id
+        )
+        
+        # La asignación de números de partida es crucial para el orden del bracket
+        ordered_matches = TournamentGenerator._assign_match_numbers(matches, level)
+        
+        return ordered_matches
+
+    @staticmethod
+    def generate_full_bracket(
+        teams: List['Team'], 
+        pending_status_id: int, 
+        completed_status_id: int
+    ) -> Dict[int, List[Dict[str, Any]]]:
+        """
+        Genera un bracket completo como un diccionario de niveles, donde cada nivel
+        contiene una lista de diccionarios de partidas.
+        """
+        if len(teams) < 2:
+            raise ValueError("Se necesitan al menos 2 equipos para generar un bracket.")
+
+        initial_matches = TournamentGenerator.generate_initial_matches(
+            teams, pending_status_id, completed_status_id
+        )
+        
+        bracket_size, _ = TournamentGenerator._calculate_bracket_size(len(teams))
+        max_level = int(math.log2(bracket_size)) - 1 if bracket_size > 1 else 0
+
+        matches_by_level = {max_level: initial_matches}
+
+        # Generar niveles superiores (semifinales, final, etc.) vacíos
+        for level in range(max_level - 1, -1, -1):
+            num_matches_in_level = 2 ** level
+            matches_in_level = []
+
+            for i in range(num_matches_in_level):
+                # El número de partida en un árbol binario es base + índice
+                match_number = (2 ** level) + i
+                matches_in_level.append({
+                    "level": level,
+                    "match_number": match_number,
+                    "is_bye": False,
+                    "status_id": pending_status_id,
+                    "team_a_id": None, # Se llenarán a medida que avance el torneo
+                    "team_b_id": None,
+                })
+            
+            matches_by_level[level] = matches_in_level
+
+        return matches_by_level
+
 
 class TournamentService:
+
+    @staticmethod
+    def start_tournament(tournament_id: int) -> bool:
+        """
+        Inicia un torneo: genera todas las partidas a partir de diccionarios
+        y las guarda en la base de datos, actualizando el estado del torneo.
+        """
+        tournament = Tournament.query.get_or_404(tournament_id)
+
+        # Prueba ejecutar esto justo antes de tu operación fallida
+        """
+        print(f"Realizando prueba de inserción de partida para el torneo {tournament_id}", flush=True)
+        test_match = Match(
+            tournament_id=7,
+            level=2,
+            match_number=99,  # Usa un número que no exista
+            team_a_id=18,
+            team_b_id=None,
+            is_bye=True,
+            status_id=2,
+            winner_id=18
+        )
+        db.session.add(test_match)
+        db.session.commit()
+        print(f"Partida de prueba insertada correctamente para el torneo {tournament_id}", flush=True)
+        """
+
+        # 1. Validar el estado actual del torneo
+        if tournament.status.code != 'REGISTRATION_OPEN':
+            raise ValueError("El torneo debe estar en 'REGISTRATION_OPEN' para poder iniciarse.")
+
+        teams = Team.query.filter_by(tournament_id=tournament_id).all()
+        if len(teams) < 2:
+            raise ValueError("Se necesitan al menos dos equipos para iniciar el torneo.")
+
+        # 2. Obtener los IDs de estado necesarios ANTES de la generación
+        try:
+            in_progress_status = db.session.query(TournamentStatus).filter_by(code='IN_PROGRESS').one()
+            pending_match_status = db.session.query(MatchStatus).filter_by(code='PENDING').one()
+            completed_match_status = db.session.query(MatchStatus).filter_by(code='COMPLETED').one()
+        except Exception as e:
+            raise RuntimeError(f"No se pudieron encontrar los estados necesarios en la BD: {e}")
+
+        # 3. Generar el bracket como una estructura de datos (diccionarios)
+        match_data_by_level = TournamentGenerator.generate_full_bracket(
+            teams, pending_match_status.id, completed_match_status.id
+        )
+
+        if not match_data_by_level:
+            raise ValueError("No se pudieron generar las partidas para el torneo.")
+            
+        team_map = {team.id: team for team in teams}
+
+        # 4. Convertir los diccionarios a objetos Match y añadirlos a la sesión
+        #    *** ESTA ES LA SECCIÓN CORREGIDA ***
+        total_matches_created = 0
+        for level, match_dicts in match_data_by_level.items():
+            for match_data in match_dicts:
+                
+                # Asignar el ID del torneo que falta en el diccionario
+                match_data['tournament_id'] = tournament_id
+                
+                # --- INICIO DE LA CORRECCIÓN CLAVE ---
+                # En lugar de Match(**match_data), creamos una instancia vacía
+                # y asignamos los atributos manualmente. Esto evita problemas
+                # con un posible constructor __init__ personalizado en el modelo Match.
+                new_match = Match()
+                for key, value in match_data.items():
+                    setattr(new_match, key, value)
+                # --- FIN DE LA CORRECCIÓN CLAVE ---
+                
+                # Logging para depuración (opcional pero útil)
+                team_a_name = team_map.get(new_match.team_a_id).name if new_match.team_a_id else "TBD"
+                team_b_name = "BYE" if new_match.is_bye else (team_map.get(new_match.team_b_id).name if new_match.team_b_id else "TBD")
+                print(f"  Añadiendo a la sesión: Match {new_match.match_number} ({team_a_name} vs {team_b_name}) con StatusID: {new_match.status_id}", flush=True)
+
+                db.session.add(new_match)
+                total_matches_created += 1
+
+        print(f"Total de partidas para añadir a la sesión: {total_matches_created}", flush=True)
+
+        # 5. Actualizar el estado del torneo a 'IN_PROGRESS'
+        print(f"Actualizando estado del torneo '{tournament.name}' a IN_PROGRESS (ID: {in_progress_status.id})", flush=True)
+        tournament.status_id = in_progress_status.id
+        
+        try:
+            # Confirmar todos los cambios en la base de datos en una sola transacción
+            db.session.commit()
+            print(f"Torneo '{tournament.name}' iniciado exitosamente.", flush=True)
+        except Exception as e:
+            db.session.rollback()
+            print(f"ERROR: No se pudo iniciar el torneo '{tournament.name}'. Rollback ejecutado. Causa: {e}", flush=True)
+            # Levantar el error original es más informativo para el debugging
+            raise e
+
+        return True
+
+    @classmethod
+    def cancel_tournament(cls, tournament_id):
+        # Obtener el estado "CANCELLED" de la base de datos
+        cancelled_status = db.session.query(TournamentStatus).filter_by(code='CANCELLED').one()
+        print(f"Estado de torneo cancelado: {cancelled_status.code}", flush=True)
+        
+        # Obtener el torneo
+        tournament = db.session.query(Tournament).get(tournament_id)
+        if not tournament:
+            raise ValueError("Torneo no encontrado")
+        
+        # Verificar que el torneo no esté ya completado o cancelado
+        if tournament.status.code in ['COMPLETED', 'CANCELLED']:
+            raise ValueError("No se puede cancelar un torneo que ya está completado o cancelado")
+        
+        # Actualizar el estado
+        tournament.status_id = cancelled_status.id
+        
+        # Opcional: cancelar también todos los partidos pendientes
+        matches = db.session.query(Match).filter_by(tournament_id=tournament_id).all()
+        cancelled_match_status = db.session.query(MatchStatus).filter_by(code='CANCELLED').one()
+        
+        for match in matches:
+            if match.status.code == 'PENDING':
+                match.status_id = cancelled_match_status.id
+        
+        db.session.commit()
 
     @staticmethod
     def get_team_initation_status_id(code: str) -> int:
@@ -97,6 +379,10 @@ class TournamentService:
                 user_id=user_id,
                 is_leader=False
             ))
+
+            # Calcular el nuevo seed_score con TODOS los miembros (incluyendo el nuevo)
+            team = Team.query.get(invitation.team_id)
+            team.seed_score = TeamService.calculate_team_seed(team.id)
 
             db.session.commit()
             return True
