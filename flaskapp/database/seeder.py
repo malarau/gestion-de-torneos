@@ -98,7 +98,7 @@ def seed_master_data():
             {'code': 'TOURNAMENT_START', 'description': 'El torneo ha iniciado'}
         ],
         RelatedEntityType: [
-            {'name': 'Tournament'}
+            {'name': 'TOURNAMENT'}
         ],
         ActivityCategory: [
             {'name': 'eSports'},

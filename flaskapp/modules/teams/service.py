@@ -74,6 +74,11 @@ class TeamService:
         # Obtener datos base
         tournament = Tournament.query.get_or_404(tournament_id)
 
+        # Validación 0: verificar si hay cupo disponible
+        current_teams_count = db.session.query(Team).filter_by(tournament_id=tournament_id).count()
+        if current_teams_count >= tournament.max_teams:
+            raise ValueError(f"No se pueden crear más equipos. El torneo ya alcanzó el máximo de {tournament.max_teams} equipos.")
+
         # Validación 1: no debe ser admin
         user = User.query.get_or_404(leader_id)
         if user.is_admin:
