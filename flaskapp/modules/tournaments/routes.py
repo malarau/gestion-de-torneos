@@ -131,7 +131,7 @@ def manage(organization_id, tournament_id=None):
                 form, organization_id, tournament_id
             )
             flash('Torneo guardado exitosamente', 'success')
-            return redirect(url_for('tournaments_blueprint.manage', 
+            return redirect(url_for('tournaments_blueprint.detail', 
                                 organization_id=organization_id,
                                 tournament_id=tournament.id))
         except ValueError as e:

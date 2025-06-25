@@ -328,7 +328,7 @@ def create_completed_tournament(org, activities, organizers, status_completed, o
         event=linked_event,
         activity=random.choice(activities),
         name=f"Copa {fake.word().capitalize()} COMPLETED",
-        description=fake.paragraph(nb_sentences=2),
+        description=fake.paragraph(nb_sentences=3),
         max_teams=4,  # Exactamente 4 equipos para semifinales
         start_date=start_date,
         end_date=end_date,

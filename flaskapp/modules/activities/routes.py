@@ -26,13 +26,15 @@ def index():
 @activities_blueprint.route('/<int:activity_id>')
 @login_required
 def detail(activity_id):
-    activity = ActivityService.get_activity_detail(
+    activity_data = ActivityService.get_complete_activity_details(
         activity_id,
         current_user.is_admin
     )
+    
     return render_template(
         'activities/detail.html',
-        activity=activity
+        activity=activity_data['activity'],
+        stats=activity_data['stats']
     )
 
 @activities_blueprint.route('/manage/', methods=['GET', 'POST'])

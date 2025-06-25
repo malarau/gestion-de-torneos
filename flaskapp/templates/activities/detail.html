@@ -27,7 +27,7 @@
           <p><strong>Categoría:</strong> {{ activity.category or 'N/A' }}</p>
         </div>
         <div class="row text-white">
-          <p><strong>Jugadores por equipo:</strong> {{ activity.min_players }}</p>
+          <p><strong>Jugadores por equipo:</strong> {{ activity.min_players }}+</p>
         </div>
         <div class="row text-white">
           <p><strong>Estado:</strong> 
@@ -36,15 +36,193 @@
             </span>
           </p>
         </div>
-        <div class="row text-white">
-          <p><strong>Torneos:</strong> {{ activity.tournaments_count }}</p>
-        </div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="container-fluid mt--6">
-  <!-- Puedes añadir más secciones aquí como torneos recientes -->
+  <div class="row">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-0">{{ activity.name }}</h3>
+              <p class="text-sm text-muted mb-0">{{ activity.description }}</p>
+            </div>
+            {% if activity.category %}
+            <div class="col-auto">
+              <span class="badge badge-primary">{{ activity.category.name }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Estadísticas principales -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Torneos</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ stats.total_tournaments }}</span>
+                      <small class="text-muted">{{ stats.percentage_of_all }}% de todos los torneos</small>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
+                        <i class="ni ni-trophy"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Equipos</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ stats.total_teams }}</span>
+                      <small class="text-muted"> creados en estos torneos</small>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-info text-white rounded-circle shadow">
+                        <i class="ni ni-archive-2"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mt-4">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Jugadores</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ stats.total_participants }}</span>
+                      <small class="text-muted"> únicos participando</small>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
+                        <i class="ni ni-single-02"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 mt-4">
+              <div class="card card-stats">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col">
+                      <h5 class="card-title text-uppercase text-muted mb-0">Organizaciones</h5>
+                      <span class="h2 font-weight-bold mb-0">{{ stats.popular_organizations_count }}</span>
+                      <small class="text-muted"> que usan esta actividad</small>
+                    </div>
+                    <div class="col-auto">
+                      <div class="icon icon-shape bg-gradient-red text-white rounded-circle shadow">
+                        <i class="ni ni-building"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Organizaciones más activas -->
+          {% if stats.popular_organizations %}
+          <div class="mt-5">
+            <h4>Organizaciones más activas</h4>
+            <div class="row">
+              {% for org in stats.popular_organizations %}
+              <div class="col-md-4">
+                <div class="card">
+                  <div class="card-body text-center">
+                    <h5 class="card-title">{{ org.name }}</h5>
+                    <div class="icon icon-shape bg-gradient-primary rounded-circle text-white mb-3">
+                      <i class="ni ni-building"></i>
+                    </div>
+                    <h2 class="mb-0">{{ org.tournament_count }}</h2>
+                    <p class="text-sm text-muted mb-0">torneos organizados</p>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4">
+      <!-- Torneos recientes -->
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">Torneos recientes</h4>
+        </div>
+        <div class="card-body">
+          {% if stats.recent_tournaments %}
+          <div class="list-group">
+            {% for tournament in stats.recent_tournaments %}
+            <a href="{{ url_for('tournaments_blueprint.detail', organization_id=tournament.organization_id, tournament_id=tournament.id) }}" 
+               class="list-group-item list-group-item-action">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">{{ tournament.name }}</h6>
+                  <small class="text-muted">{{ tournament.organization_name }}</small>
+                </div>
+                <div class="text-right">
+                  <small class="text-muted">{{ tournament.start_date }}</small>
+                  <span class="badge badge-{% if tournament.status == 'COMPLETED' %}success{% elif tournament.status == 'CANCELLED' %}danger{% elif tournament.status == 'IN_PROGRESS' %}info{% else %}primary{% endif %}">
+                    {{ tournament.status.replace('_', ' ').capitalize() }}
+                  </span>
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-warning">
+            No hay torneos recientes para esta actividad
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Detalles técnicos -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h4 class="mb-0">Detalles técnicos</h4>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              Jugadores por equipo
+              <span class="badge badge-primary badge-pill">{{ activity.min_players }}+</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              Estado
+              <span class="badge badge-{{ 'success' if activity.is_active else 'danger' }} badge-pill">
+                {{ 'Activa' if activity.is_active else 'Inactiva' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              Fecha creación
+              <span>{{ activity.created_at }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+
 {% endblock %}

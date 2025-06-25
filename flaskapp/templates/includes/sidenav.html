@@ -10,13 +10,25 @@
       <!-- Collapse -->
       <div class="collapse navbar-collapse" id="sidenav-collapse-main">
         <!-- Nav items -->
+
+        <!-- Divider -->
+        <hr class="my-3">
+        <!-- Heading -->
+        <h6 class="navbar-heading p-0 text-muted">
+          <span class="docs-normal">Inicio</span>
+        </h6>
+
         <ul class="navbar-nav">
+
+          <!-- Se muestra este elemento solo si el usuario es administrador -->
+          {% if current_user.is_admin %}
           <li class="nav-item">
             <a class="nav-link {% if 'index' in segment %} active {% endif %}" href="/">
               <i class="fa-solid fa-house"></i>
-              <span class="nav-link-text">Inicio</span>
+              <span class="nav-link-text">Doashboard</span>
             </a>
           </li>
+          {% endif %}
           
           <li class="nav-item">
             <a class="nav-link {% if 'organizations' in segment %} active {% endif %}" href="/organizations">
@@ -25,16 +37,42 @@
             </a>
           </li>
           
-          <!-- Se muestra este elemento solo si el usuario es administrador -->
-          {% if current_user.is_admin %}
+          
           <li class="nav-item">
             <a class="nav-link {% if 'organizations' in segment %} active {% endif %}" href="/activities">
               <i class="fa-solid fa-layer-group" style="color: #ec946b;"></i>
               <span class="nav-link-text">Actividades</span>
             </a>
+          </li>             
+        </ul>
+
+
+        
+        <!-- Divider -->
+        <hr class="my-3">
+        <!-- Heading -->
+        <h6 class="navbar-heading p-0 text-muted">
+          <span class="docs-normal">Cuenta</span>
+        </h6>
+
+        <!-- Navigation -->
+        <ul class="navbar-nav mb-md-3">
+
+          <li class="nav-item">
+            <a class="nav-link {% if 'profile' in segment %} active {% endif %}" href="/profile">
+              <i class="ni ni-single-02 text-yellow"></i>
+              <span class="nav-link-text">Profile</span>
+            </a>
           </li>
-          {% endif %}
-             
+          
+
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('authentication_blueprint.logout') }}">
+              <i class="ni ni-user-run text-red"></i>
+              <span class="nav-link-text">Logout</span>
+            </a>
+          </li> 
+
         </ul>
       </div>
     </div>
