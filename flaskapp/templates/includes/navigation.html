@@ -1,7 +1,7 @@
 <nav class="navbar navbar-top navbar-expand navbar-dark bg-primary border-bottom">
   <div class="container-fluid">
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <form class="navbar-search navbar-search-light form-inline mr-sm-3" id="navbar-search-main">
+      <!-- <form class="navbar-search navbar-search-light form-inline mr-sm-3" id="navbar-search-main">
           <div class="form-group mb-0">
               <div class="input-group input-group-alternative input-group-merge">
               <div class="input-group-prepend">
@@ -13,7 +13,7 @@
           <button type="button" class="close" data-action="search-close" data-target="#navbar-search-main" aria-label="Close">
               <span aria-hidden="true">×</span>
           </button>
-      </form>
+      </form> -->
       <!-- Navbar links -->
       <ul class="navbar-nav align-items-center  ml-md-auto ">
         <li class="nav-item d-xl-none">
@@ -26,15 +26,22 @@
             </div>
           </div>
         </li>
-        <li class="nav-item d-sm-none">
+        <!-- <li class="nav-item d-sm-none">
           <a class="nav-link" href="#" data-action="search-show" data-target="#navbar-search-main">
             <i class="ni ni-zoom-split-in"></i>
           </a>
-        </li>
+        </li> -->
         <li class="nav-item dropdown">
           <a class="nav-link" href="/notifications">
-            <i class="ni ni-bell-55"></i>
-          </a>
+            <i class="ni ni-bell-55 position-relative">
+                {% if has_unread_notifications(current_user.id).has_unread %}
+                <span class="position-absolute top-100 start-0 translate-middle badge rounded-pill bg-danger">
+                    {{ has_unread_notifications(current_user.id).count if has_unread_notifications(current_user.id).count < 10 else '9+' }}
+                    <!-- <span class="visually-hidden">unread notifications</span> -->
+                </span>
+                {% endif %}
+            </i>
+        </a>
           <div class="dropdown-menu dropdown-menu-xl  dropdown-menu-right  py-0 overflow-hidden">
             <!-- Dropdown header -->
             <div class="px-3 py-3">

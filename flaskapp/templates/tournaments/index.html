@@ -13,7 +13,11 @@
                 <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
                 <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
                 <li class="breadcrumb-item"><a href="#">{{ segment|capitalize }}</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Inicio</li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    <a href="{{ url_for('organizations_blueprint.detail',organization_id=organization_id ) }}" >
+                        <strong> Volver </strong>
+                    </a>
+                </li>
                 </ol>
             </nav>
             </div>

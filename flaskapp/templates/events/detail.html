@@ -19,6 +19,10 @@
           </a>
         </div>
         {% endif %}
+        <a href="{{ url_for('events_blueprint.index', organization_id=event.organization_id) }}" 
+            class="btn btn-neutral">
+          <i class="fas fa-arrow-left mr-2"></i>Volver atrás
+        </a>
       </div>
 
       <div class="col-lg-4">

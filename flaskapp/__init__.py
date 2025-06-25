@@ -40,6 +40,21 @@ def register_blueprints(app):
     @app.errorhandler(500)
     def internal_error(error, msg=None):
         return render_template('home/page-500.html', msg=msg), 500
+    
+    @app.context_processor
+    def inject_notifications():
+        def has_unread_notifications(c_id: int) -> dict:
+            from flaskapp.database.models import Notification
+            unread_count = Notification.query.filter_by(
+                user_id=str(c_id),
+                is_read=False
+            ).count()
+            print(f"Unread notifications for user {c_id}: {unread_count}", flush=True)
+            return {
+                'has_unread': unread_count > 0,
+                'count': unread_count
+            }
+        return {'has_unread_notifications': has_unread_notifications}
 
 def create_app():
 

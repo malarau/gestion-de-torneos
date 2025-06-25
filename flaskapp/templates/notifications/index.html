@@ -90,7 +90,7 @@
                   </div>
                 </td>
                 <td class="text-center">
-                  <a href="{{ url_for('notifications_blueprint.go_to_tournament', tournament_id=notification.related_entity_id) }}" 
+                  <a href="{{ url_for('notifications_blueprint.mark_as_read', notification_id=notification.id, next=url_for('notifications_blueprint.go_to_tournament', tournament_id=notification.related_entity_id)) }}" 
                      class="btn btn-sm btn-neutral">
                     Ver
                   </a>

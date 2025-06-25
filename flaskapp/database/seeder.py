@@ -16,9 +16,9 @@ from flaskapp.database.models import (
 
 # Configuración inicial
 fake = Faker('es_CL')
-NUM_USERS = 500 # Número total de usuarios a crear
+NUM_USERS = 200 # Número total de usuarios a crear
 # Para pruebas, se crean 5 administradores y el resto son usuarios normales
-NUM_ORGANIZATIONS = 9
+NUM_ORGANIZATIONS = 2
 NUM_ACTIVITIES = 5
 PASSWORD = "password1" # Contraseña común para desarrollo
 
@@ -358,7 +358,7 @@ def create_completed_tournament(org, activities, organizers, status_completed, o
 
 
 def generate_name(generators): 
-    num_parts = random.randint(1, 3)
+    num_parts = random.randint(1, 2)
     parts = random.sample(generators, num_parts)
     name = ' '.join(gen() for gen in parts)
     number = random.randint(1, 999)
