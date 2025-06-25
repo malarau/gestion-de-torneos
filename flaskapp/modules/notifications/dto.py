@@ -1,23 +1,17 @@
+# modules/notifications/dto.py
 from dataclasses import dataclass
-from typing import List, Optional
-from datetime import date
+from typing import Optional
+from datetime import datetime
 
 @dataclass
-class EventDTO:
+class NotificationDTO:
     id: int
-    name: str
-    description: str
-    start_date: str
-    end_date: str
-    status: str
-    organization_id: int
-    organization_name: str
-    can_edit: bool
-
-@dataclass
-class EventDetailDTO(EventDTO):
-    creator_name: str
-    created_at: str
-    updated_at: str
-    tournaments_count: int
-    status_options: List[dict]
+    user_id: int
+    title: str
+    message: str
+    is_read: bool
+    type_id: int
+    type_id: int
+    related_entity_type_id: int
+    related_entity_id: int
+    created_at: datetime

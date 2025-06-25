@@ -1,15 +1,17 @@
+import sys
 from flask import Blueprint, render_template
-from flaskapp.database.models import Event, db
+from flaskapp.database.models import Notification, NotificationType, RelatedEntityType, Tournament, db
+from flaskapp.modules.tournaments.forms import TournamentForm
+from flaskapp.modules.tournaments.service import TournamentService
 
 """ Using events_bp blueprint to avoid circular imports """
-from flaskapp.modules.events.forms import EventForm
-from flaskapp.modules.events.service import EventService
+from flaskapp.modules.notifications.forms import NotifisForm
+from flaskapp.modules.notifications.service import NotificationService
 
-events_bp = Blueprint(
-    'events_blueprint',
-    __name__,
-    url_prefix='/organizations/<int:organization_id>/events/'
-)
+notifications_bp = Blueprint(
+    'notifications_blueprint',
+    __name__, 
+    url_prefix='/notifications')
 
 from flask import request, redirect, url_for, flash
 from flask_login import current_user, login_required
@@ -18,61 +20,58 @@ from flaskapp.modules.auth.decorators import (
     organization_organizer_required
 )
 
-@events_bp.route('/')
+@notifications_bp.route('/')
 @login_required
-@organization_member_required()
-def index(organization_id):
-    events = EventService.get_organization_events(organization_id, current_user.id)
+def index():
+    """
+    Display all notifications for the current user
+    URL: /notifications/
+    """
+    notifications = NotificationService.get_notifications(current_user.id)
     return render_template(
-        'events/index.html',
-        events=events,
-        organization_id=organization_id,
-        segment='Eventos'
-    )
+        'notifications/index.html', 
+        notifications=notifications)
 
-@events_bp.route('/<int:event_id>')
+
+@notifications_bp.route('/mark_as_read/<int:notification_id>', methods=['GET'])
 @login_required
-@organization_member_required()
-def detail(organization_id, event_id):
-    event = EventService.get_event_detail(event_id, current_user.id)
-    return render_template(
-        'events/detail.html',
-        event=event,
-        segment='Eventos'
-    )
+def mark_as_read(notification_id):
+    """ Mark a notification as read
+    URL: /notifications/mark_as_read/<notification_id>
+    """
+    notification = Notification.query.get_or_404(notification_id)
+    if notification.user_id != current_user.id:
+        flash('No tienes permisos', 'danger')
+        return redirect(url_for('notifications_blueprint.index'))
+    notification.is_read = True
+    db.session.commit()
+    flash('Notificación marcada como leída.', 'success')
+    return redirect(url_for('notifications_blueprint.index'))
 
-@events_bp.route('/manage', methods=['GET', 'POST'])
-@events_bp.route('/manage/<int:event_id>', methods=['GET', 'POST'])
+
+@notifications_bp.route('/mark_all_as_read', methods=['GET'])
 @login_required
-@organization_organizer_required()
-def manage(organization_id, event_id=None):
-    form = EventForm()
-    event = None
+def mark_all_as_read():
+    """ Mark all notifications as read
+    URL: /notifications/mark_all_as_read
+    """
+    notifications = NotificationService.get_notifications(current_user.id)
+    for notification in notifications:
+        if not notification.is_read:
+            notification.is_read = True
+    db.session.commit()
+    flash('Todas las notificaciones han sido marcadas como leídas.', 'success')
+    return redirect(url_for('notifications_blueprint.index'))
 
-    if event_id:
-        event = Event.query.get_or_404(event_id)
-        form = EventForm(obj=event)
-        form.status.data = event.status.code
 
-    if form.validate_on_submit():
-        try:
-            EventService.create_or_update_event(
-                form.data,
-                organization_id,
-                current_user.id,
-                event_id
-            )
-            flash('Evento guardado exitosamente', 'success')
-            return redirect(url_for('events_blueprint.index', organization_id=organization_id))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error al guardar: {str(e)}', 'danger')
 
-    return render_template(
-        'events/manage.html',
-        form=form,
-        event=event,
-        is_edit=event_id is not None,
-        organization_id=organization_id,
-        segment='Eventos'
-    )
+@notifications_bp.route('/go_to_tournament/<int:tournament_id>', methods=['GET'])
+@login_required
+def go_to_tournament(tournament_id):
+    print(f"Redirecting to tournament {tournament_id} for user {current_user.id}", flush=True)
+    tournament = Tournament.query.get_or_404(tournament_id)
+    
+    # print(f"Tournament details: {type(tournament_id)} Organization_id datatype : {type(tournament.organization_id)}", flush=True)
+    return redirect(url_for('tournaments_blueprint.detail', 
+                        organization_id=tournament.organization_id, 
+                        tournament_id=tournament_id))

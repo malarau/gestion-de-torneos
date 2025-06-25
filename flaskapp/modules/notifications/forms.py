@@ -3,7 +3,7 @@ from wtforms import StringField, SubmitField, TextAreaField, DateField, SelectFi
 from wtforms.validators import DataRequired, Optional
 from datetime import date
 
-class EventForm(FlaskForm):
+class NotifisForm(FlaskForm):
     name = StringField('Nombre del Evento', validators=[DataRequired()])
     description = TextAreaField('Descripción', validators=[Optional()])
     start_date = DateField('Fecha de Inicio', default=date.today, validators=[DataRequired()])
