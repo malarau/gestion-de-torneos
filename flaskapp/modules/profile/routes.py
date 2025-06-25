@@ -31,6 +31,10 @@ def profile(user_id):
 
     profile_data = ProfileService.get_user_profile(profile_user_id, current_user.id)
     
+    # Añadir estadísticas
+    if profile_user_id:
+        profile_data.stats = ProfileService.get_user_stats(profile_user_id)
+    
     if profile_user_id == current_user.id:
         form.name.data = profile_data.name
         form.email.data = profile_data.email
@@ -41,4 +45,3 @@ def profile(user_id):
         form=form if profile_data.is_current_user else None,
         segment='profile'
     )
-

@@ -97,14 +97,7 @@ class EventService:
         event.description = form_data['description']
         event.start_date = form_data['start_date']
         event.end_date = form_data['end_date']
-
-        # Este bloque previene el autoflush prematuro
-        with db.session.no_autoflush:
-            status_code = form_data['status'].strip().upper()
-            status = EventStatus.query.filter_by(code=status_code).first()
-            if not status:
-                raise ValueError(f"Estado '{status_code}' no encontrado en la base de datos.")
-            event.status_id = status.id
+        event.status_id = form_data['status_id']
 
         db.session.commit()
         return event

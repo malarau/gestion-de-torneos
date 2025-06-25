@@ -52,7 +52,6 @@ def manage(organization_id, event_id=None):
     if event_id:
         event = Event.query.get_or_404(event_id)
         form = EventForm(obj=event)
-        form.status.data = event.status.code
 
     if form.validate_on_submit():
         try:
