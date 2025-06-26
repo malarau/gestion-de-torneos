@@ -495,7 +495,7 @@ def create_completed_tournament(org, activities, organizers, status_completed, o
     # Crear bracket completo (semifinales + final)
     create_completed_bracket(tournament, teams, end_date)
 
-def generate_name(generators): 
+def generate_name(generators):
     num_parts = random.randint(1, 2)
     parts = random.sample(generators, num_parts)
     name = ' '.join(gen() for gen in parts)
@@ -702,7 +702,7 @@ def create_pending_tournament(org, activities, organizers, status_open, org_memb
         activity=random.choice(activities),
         name=f"Torneo de Prueba" if specific_members else f"Copa {fake.word().capitalize()} REGISTRATION_OPEN",
         description=fake.paragraph(nb_sentences=4),
-        max_teams=random.choice([4, 8, 16]),
+        max_teams=4,
         start_date=start_date,
         end_date=end_date,
         status=status_open,
@@ -789,5 +789,5 @@ def create_tournament_participants(tournament, org_members, organizer, specific_
     # 3. Crear equipos
     # Inscribir entre 2 y (max_teams - 1) equipos, si hay jugadores
     if potential_players and tournament.max_teams > 2:
-        num_teams_to_create = random.randint(2, max(2, tournament.max_teams - 1))
+        num_teams_to_create = 3
         create_teams_for_tournament(tournament, potential_players, num_teams_to_create)

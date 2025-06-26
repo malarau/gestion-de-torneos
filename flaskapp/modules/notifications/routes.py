@@ -43,6 +43,7 @@ def mark_as_read(notification_id):
     if notification.user_id != current_user.id:
         flash('No tienes permisos', 'danger')
         return redirect(url_for('notifications_blueprint.index'))
+    
     notification.is_read = True
     db.session.commit()
     flash('Notificación marcada como leída.', 'success')
@@ -50,8 +51,7 @@ def mark_as_read(notification_id):
     next_url = request.args.get('next')
     if next_url:
         return redirect(next_url)
-    return redirect(url_for('notifications_blueprint.index'))  # Fallback
-    return redirect(url_for('notifications_blueprint.index'))
+    return redirect(url_for('notifications_blueprint.index')) 
 
 
 @notifications_bp.route('/mark_all_as_read', methods=['GET'])

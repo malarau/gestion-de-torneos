@@ -61,25 +61,31 @@ def register():
 
         name = request.form['name']
         email = request.form['email']
+        password = request.form['password']
 
-        # Check usename exists
+        # Check username exists
         user = User.query.filter_by(name=name).first()
         if user:
             return render_template('authentication/register.html',
-                                   msg='Username already registered',
-                                   success=False,
-                                   form=create_account_form)
+                                msg='Username already registered',
+                                success=False,
+                                form=create_account_form)
 
         # Check email exists
         user = User.query.filter_by(email=email).first()
         if user:
             return render_template('authentication/register.html',
-                                   msg='Email already registered',
-                                   success=False,
-                                   form=create_account_form)
-
-        # else we can create the user
-        user = User(**request.form)
+                                msg='Email already registered',
+                                success=False,
+                                form=create_account_form)
+        
+        # Create new user with default profile picture
+        user = User(
+            name=name,
+            email=email,
+            password=password,  # Asegúrate de hashear la contraseña antes de guardarla
+            profile_picture="https://randomuser.me/api/portraits/men/1.jpg"  # Imagen por defecto
+        )
         
         # Get a database session
         db.session.add(user)
