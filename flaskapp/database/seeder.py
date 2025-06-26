@@ -134,7 +134,7 @@ def create_users(num_random_users):
         name="Admin Principal",
         email="admin@test.com",
         password=PASSWORD,
-        profile_pic="https://randomuser.me/api/portraits/men/0.jpg",
+        profile_picture="https://randomuser.me/api/portraits/men/0.jpg",
         is_admin=True,
         created_at=fake.date_time_between(start_date='-2y', end_date='now')
     )
@@ -146,7 +146,7 @@ def create_users(num_random_users):
             name="Organizador de Organización de Prueba",
             email="organizador@test.com",
             password=PASSWORD,
-            profile_pic="https://randomuser.me/api/portraits/men/1.jpg",
+            profile_picture="https://randomuser.me/api/portraits/men/1.jpg",
             is_admin=False,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         ),
@@ -154,7 +154,7 @@ def create_users(num_random_users):
             name="Líder de Equipo",
             email="lider@test.com",
             password=PASSWORD,
-            profile_pic="https://randomuser.me/api/portraits/women/2.jpg",
+            profile_picture="https://randomuser.me/api/portraits/women/2.jpg",
             is_admin=False,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         ),
@@ -162,7 +162,7 @@ def create_users(num_random_users):
             name="Jugador Principal",
             email="jugador@test.com",
             password=PASSWORD,
-            profile_pic="https://randomuser.me/api/portraits/men/3.jpg",
+            profile_picture="https://randomuser.me/api/portraits/men/3.jpg",
             is_admin=False,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         ),
@@ -170,7 +170,7 @@ def create_users(num_random_users):
             name="Árbitro Oficial",
             email="arbitro@test.com",
             password=PASSWORD,
-            profile_pic="https://randomuser.me/api/portraits/women/4.jpg",
+            profile_picture="https://randomuser.me/api/portraits/women/4.jpg",
             is_admin=False,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         )
@@ -186,7 +186,7 @@ def create_users(num_random_users):
             name=f"Admin Aleatorio {i}",
             email=f"admin_{i}@test.com",
             password=PASSWORD,
-            profile_pic=f"https://randomuser.me/api/portraits/{'women' if i % 2 == 0 else 'men'}/{i%100}.jpg",
+            profile_picture=f"https://randomuser.me/api/portraits/{'women' if i % 2 == 0 else 'men'}/{i%100}.jpg",
             is_admin=True,
             created_at=fake.date_time_between(start_date='-2y', end_date='now')
         )
