@@ -153,6 +153,7 @@ class MatchService:
     def update_match(match_id: int, update_data: dict) -> bool:
         """Actualiza un partido, determina ganador y propaga al siguiente si corresponde"""
         if not MatchService.can_edit_match(match_id, update_data.get('user_id')):
+            print("No se puede editar el match: permisos insuficientes o estado inválido")
             return False
 
         match = Match.query.get(match_id)

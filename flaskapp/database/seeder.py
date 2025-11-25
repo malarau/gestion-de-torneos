@@ -16,9 +16,9 @@ from flaskapp.database.models import (
 
 # Configuración inicial
 fake = Faker('es_CL')
-NUM_USERS = 400 # Número total de usuarios a crear
+NUM_USERS = 500 # Número total de usuarios a crear
 # Para pruebas, se crean 5 administradores y el resto son usuarios normales
-NUM_ORGANIZATIONS = 5
+NUM_ORGANIZATIONS = 7
 NUM_ACTIVITIES = 5
 PASSWORD = "password1" # Contraseña común para desarrollo
 
@@ -447,7 +447,7 @@ def create_tournament_variants(org, activities, organizers, status_open, status_
     if org.name == "Organización de Prueba":
         print(org, flush=True)
         create_pending_tournament(org, activities, organizers, status_open, org_members, specific_members)
-    for _ in range(random.randint(1, 2)):
+    for _ in range(random.randint(2, 4)):
         create_pending_tournament(org, activities, organizers, status_open, org_members)
 
 
@@ -702,7 +702,7 @@ def create_pending_tournament(org, activities, organizers, status_open, org_memb
         activity=random.choice(activities),
         name=f"Torneo de Prueba" if specific_members else f"Copa {fake.word().capitalize()} REGISTRATION_OPEN",
         description=fake.paragraph(nb_sentences=4),
-        max_teams=4,
+        max_teams=random.choice([4, 8, 16]),
         start_date=start_date,
         end_date=end_date,
         status=status_open,
@@ -726,7 +726,7 @@ def create_limited_tournament_participants(tournament, org_members, organizer):
     
     # 3. Solo 1-3 equipos (inscripciones incompletas)
     if potential_players:
-        num_teams_to_create = random.randint(1, 3)
+        num_teams_to_create = random.randint(1, 4)
         create_teams_for_tournament(tournament, potential_players, num_teams_to_create, prefix="Team Cancelado")
 
 
@@ -789,5 +789,5 @@ def create_tournament_participants(tournament, org_members, organizer, specific_
     # 3. Crear equipos
     # Inscribir entre 2 y (max_teams - 1) equipos, si hay jugadores
     if potential_players and tournament.max_teams > 2:
-        num_teams_to_create = 3
+        num_teams_to_create = random.randint(2, tournament.max_teams-1)
         create_teams_for_tournament(tournament, potential_players, num_teams_to_create)

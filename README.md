@@ -151,5 +151,5 @@ pytest
 App+PostgreSQL+pgAdmin
 
 ```bash
-docker-compose -f ./docker-compose.prod.yml -d up --build
+docker-compose -f ./docker-compose.prod.yml up --build -d
 ```

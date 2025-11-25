@@ -1,21 +1,16 @@
 import pytest
-from flask import Flask
+from flaskapp import create_app, db as _db
+from flaskapp.config import TestingConfig 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def app():
-    app = Flask(__name__)
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # AHORA SÍ FUNCIONA: Le pasamos la configuración explícitamente
+    # Esto hará que create_app use el puerto 5433 y cargue los triggers
+    app = create_app(config_class=TestingConfig)
     
     with app.app_context():
         yield app
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def db(app):
-    from flaskapp.database.models import db
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-        yield db
-        db.drop_all()
+    yield _db

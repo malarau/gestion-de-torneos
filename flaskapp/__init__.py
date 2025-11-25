@@ -56,17 +56,20 @@ def register_blueprints(app):
             }
         return {'has_unread_notifications': has_unread_notifications}
 
-def create_app():
+def create_app(config_class=None):
 
     """Create a Flask application."""
     app = Flask(__name__)    
     
     # Configuration
     app.config['SECRET_KEY'] = os.urandom(32)
+
+    env = os.getenv("FLASK_ENV", "development")
     
-    # Dynamically load the config class
-    env = os.getenv("FLASK_ENV", "development")  # Default: development
-    if env == "production":
+    if config_class:
+        # Prioridad 1: Si Pytest nos pasa una config, la usamos.
+        app.config.from_object(config_class)
+    elif env == "production":
         app.config.from_object("flaskapp.config.ProductionConfig")
     else:
         app.config.from_object("flaskapp.config.DevelopmentConfig")
@@ -86,8 +89,9 @@ def create_app():
     
     # Create database tables and seed data
     with app.app_context():
-        db.create_all()   # Creates tables for ALL modules' models   
-        seed_functions_and_triggers(app)  # Insert base data required for system operation
+        db.create_all()   # Creates tables for ALL modules' models
+        if env == "production" or app.config.get('TESTING'):
+            seed_functions_and_triggers(app)  # Insert base data required for system operation
         # Seed the database with test data
         seed_db_command(app)
 

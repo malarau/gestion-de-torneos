@@ -16,4 +16,5 @@ README.md
 README.dev.md
 README.db.md
 README.HU.md
-
+.sonar
+.sonar/*

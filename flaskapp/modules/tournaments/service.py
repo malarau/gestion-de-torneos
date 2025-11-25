@@ -173,24 +173,6 @@ class TournamentService:
         """
         tournament = Tournament.query.get_or_404(tournament_id)
 
-        # Prueba ejecutar esto justo antes de tu operación fallida
-        """
-        print(f"Realizando prueba de inserción de partida para el torneo {tournament_id}", flush=True)
-        test_match = Match(
-            tournament_id=7,
-            level=2,
-            match_number=99,  # Usa un número que no exista
-            team_a_id=18,
-            team_b_id=None,
-            is_bye=True,
-            status_id=2,
-            winner_id=18
-        )
-        db.session.add(test_match)
-        db.session.commit()
-        print(f"Partida de prueba insertada correctamente para el torneo {tournament_id}", flush=True)
-        """
-
         # 1. Validar el estado actual del torneo
         if tournament.status.code != 'REGISTRATION_OPEN':
             raise ValueError("El torneo debe estar en 'REGISTRATION_OPEN' para poder iniciarse.")
@@ -218,7 +200,6 @@ class TournamentService:
         team_map = {team.id: team for team in teams}
 
         # 4. Convertir los diccionarios a objetos Match y añadirlos a la sesión
-        #    *** ESTA ES LA SECCIÓN CORREGIDA ***
         total_matches_created = 0
         for level, match_dicts in match_data_by_level.items():
             for match_data in match_dicts:
@@ -226,14 +207,11 @@ class TournamentService:
                 # Asignar el ID del torneo que falta en el diccionario
                 match_data['tournament_id'] = tournament_id
                 
-                # --- INICIO DE LA CORRECCIÓN CLAVE ---
-                # En lugar de Match(**match_data), creamos una instancia vacía
-                # y asignamos los atributos manualmente. Esto evita problemas
-                # con un posible constructor __init__ personalizado en el modelo Match.
+                # Creamos una instancia vacía y asignamos los atributos manualmente.
+                # Esto evita problemas con un posible constructor __init__ personalizado en el modelo Match.
                 new_match = Match()
                 for key, value in match_data.items():
                     setattr(new_match, key, value)
-                # --- FIN DE LA CORRECCIÓN CLAVE ---
                 
                 # Logging para depuración (opcional pero útil)
                 team_a_name = team_map.get(new_match.team_a_id).name if new_match.team_a_id else "TBD"

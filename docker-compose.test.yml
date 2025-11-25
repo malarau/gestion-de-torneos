@@ -1,0 +1,37 @@
+services:
+  db_test:
+    image: postgres:13-alpine
+    # Docker leerá estas variables directamente de tu archivo .env actual.
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      # Exponemos la base de datos de prueba en el puerto 5433.
+      - "5433:5432"
+    volumes:
+      # Usamos un volumen con nombre distinto para no corromper tus datos de prod
+      - postgres_data_test:/var/lib/postgresql/data
+    networks:
+      - backend_network
+
+  # (Opcional) pgAdmin para pruebas, en otro puerto para no chocar
+  pgadmin_test:
+    image: dpage/pgadmin4
+    env_file: .env
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5051:80" # Puerto diferente al 5050 de prod
+    depends_on:
+      - db_test
+    networks:
+      - backend_network
+
+volumes:
+  postgres_data_test:
+
+networks:
+  backend_network:
+    driver: bridge

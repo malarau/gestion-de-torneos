@@ -20,6 +20,8 @@ venv
 
 # other
 .DS_Store
+.sonar
+.sonar/*
 
 # sphinx docs 
 _build

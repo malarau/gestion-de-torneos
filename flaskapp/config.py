@@ -19,6 +19,20 @@ class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{BASE_DIR / 'database' / 'dev.db'}" 
     DEBUG = True  # Enable debug mode for development
 
+class TestingConfig:
+    TESTING = True
+    DEBUG = True
+    # Apuntamos al puerto 5433 que definimos en docker-compose.test.yml
+    # Reutilizamos las credenciales de tu .env
+    DB_USER = os.getenv('DB_USER', 'pguseradmin')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'admin123')
+    DB_HOST = 'localhost' # Desde fuera del contenedor (pytest corre local)
+    DB_PORT = '5433'      # Puerto del contenedor de pruebas
+    DB_NAME = os.getenv('DB_NAME', 'gestion_de_torneos_db')
+    
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 class ProductionConfig(BaseConfig):
     """Configuration for production (PostgreSQL)"""
     DEBUG = False
