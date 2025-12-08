@@ -10,87 +10,114 @@ from typing import Dict, List
 
 class TournamentGenerator:
     """
-    Genera brackets de torneo de eliminación simple con cabezas de serie y byes.
-    TODA la lógica opera con diccionarios de Python para mantenerse desacoplada de la BD.
+    Generador de brackets con Seeding Visual Balanceado.
+    El Seed 1 va arriba del todo, el Seed 2 abajo del todo.
     """
-    
+
     @staticmethod
     def _calculate_bracket_size(team_count: int) -> Tuple[int, int]:
-        """Calcula el tamaño del bracket y el número de byes necesarios."""
+        # PROTECCIÓN: Si vienen 0 equipos, evitamos el error de math domain
         if team_count < 2:
-            raise ValueError("Se requieren al menos dos equipos para un torneo.")
+            # Retornamos valores seguros o lanzamos error controlado
+            raise ValueError("Se requieren al menos 2 equipos para generar el torneo.")
         
+        # math.log2(team_count) fallaría si team_count es 0
         bracket_size = 2 ** math.ceil(math.log2(team_count))
         byes_count = bracket_size - team_count
         return bracket_size, byes_count
 
     @staticmethod
     def _seed_teams(teams: List['Team']) -> List['Team']:
-        """Ordena los equipos por seed_score (los mejores primero)."""
+        """Ordena: Mayor puntaje primero"""
         return sorted(teams, key=lambda x: x.seed_score, reverse=True)
+
+    @staticmethod
+    def _get_bracket_sequence(num_slots: int) -> List[int]:
+        """
+        Genera la secuencia de índices para que el bracket quede visualmente balanceado.
+        Ej para 8: [1, 8, 4, 5, 3, 6, 2, 7] (Indices base 0: 0, 7, 3, 4, 2, 5, 1, 6)
+        """
+        # Comenzamos con la base [0, 1] (Seed 1 vs Seed 2)
+        seeds = [0, 1]
+        
+        # Iteramos expandiendo la lista hasta llegar al tamaño del bracket
+        while len(seeds) < num_slots:
+            next_seeds = []
+            
+            # Estrategia de expansión visual
+            if len(seeds) == 2:
+                # Paso clave: De 2 pasamos a 4 con orden [1, 4, 3, 2]
+                # Esto asegura que el 1 quede arriba y el 2 abajo
+                next_seeds = [0, 3, 2, 1]
+            else:
+                # Para brackets más grandes (8, 16, 32...), expandimos cada elemento
+                # manteniendo el patrón lineal de la iteración anterior
+                for s in seeds:
+                    # El oponente siempre es (TamañoTotal - 1 - Seed)
+                    opponent = (len(seeds) * 2 - 1) - s
+                    next_seeds.append(s)
+                    next_seeds.append(opponent)
+            
+            seeds = next_seeds
+            
+        return seeds
 
     @staticmethod
     def _create_initial_matches(
         sorted_teams: List['Team'],
         level: int,
-        byes_count: int,
+        bracket_size: int,
         pending_status_id: int,
         completed_status_id: int
     ) -> List[Dict[str, Any]]:
-        """
-        Crea los diccionarios que representan las partidas iniciales de la primera ronda.
-        Maneja tanto partidas regulares como byes.
-        """
+        
         matches = []
+        # Rellenamos con None hasta llegar a potencia de 2
+        padded_teams = sorted_teams + [None] * (bracket_size - len(sorted_teams))
         
-        # Crear partidas de bye (victorias automáticas para los mejores seeds)
-        for i in range(byes_count):
-            bye_team = sorted_teams[i]
-            matches.append({
-                "level": level,
-                "match_number": 0,  # Temporal, se asignará correctamente después
-                "team_a_id": bye_team.id,
-                "team_b_id": None,
-                "is_bye": True,
-                "status_id": 2,
-                "winner_id": bye_team.id
-            })
+        # Obtenemos el orden visual correcto
+        seed_indices = TournamentGenerator._get_bracket_sequence(bracket_size)
         
-        # Crear partidas regulares para los equipos restantes
-        remaining_teams = sorted_teams[byes_count:]
-        for i in range(0, len(remaining_teams), 2):
-            team_a = remaining_teams[i]
-            team_b = remaining_teams[i + 1] if i + 1 < len(remaining_teams) else None
+        # Iteramos de 2 en 2 para crear los enfrentamientos
+        for i in range(0, len(seed_indices), 2):
+            idx_a = seed_indices[i]
+            idx_b = seed_indices[i+1]
             
-            matches.append({
+            team_a = padded_teams[idx_a]
+            team_b = padded_teams[idx_b]
+            
+            # Detectar Bye
+            is_bye = (team_a is None or team_b is None)
+            
+            # Determinar ganador si es Bye
+            winner_id = None
+            if is_bye:
+                winner_id = team_a.id if team_a else team_b.id
+
+            match_data = {
                 "level": level,
-                "match_number": 0,  # Temporal
-                "team_a_id": team_a.id,
+                "match_number": 0, # Se asignará en el siguiente paso
+                "team_a_id": team_a.id if team_a else None,
                 "team_b_id": team_b.id if team_b else None,
-                "is_bye": False,
-                "status_id": pending_status_id
-            })
-            
+                "is_bye": is_bye,
+                "status_id": completed_status_id if is_bye else pending_status_id,
+                "winner_id": winner_id
+            }
+            matches.append(match_data)
+                
         return matches
 
     @staticmethod
     def _assign_match_numbers(matches: List[Dict[str, Any]], level: int) -> List[Dict[str, Any]]:
-        """
-        Asigna los números de partida correctos siguiendo los patrones de seeding del torneo.
-        """
-        if not matches:
-            return []
-            
-        num_matches_in_level = len(matches)
+        if not matches: return []
         base_match_number = 2**level
         
-        # Standard Seeding Order (e.g., for 8 slots: 1 vs 8, 4 vs 5, 2 vs 7, 3 vs 6)
-        # This simplified assignment ensures unique numbers per level.
-        # A more complex algorithm could be used for precise bracket placement.
+        # Asignamos estrictamente en el orden que vienen de _create_initial_matches
+        # para respetar el orden visual del árbol
         for i, match in enumerate(matches):
             match['match_number'] = base_match_number + i
-
-        return sorted(matches, key=lambda m: m['match_number'])
+            
+        return matches
 
     @staticmethod
     def generate_initial_matches(
@@ -98,23 +125,27 @@ class TournamentGenerator:
         pending_status_id: int, 
         completed_status_id: int
     ) -> List[Dict[str, Any]]:
-        """
-        Genera una lista de diccionarios para la primera ronda de partidas del torneo.
-        """
-        if len(teams) < 2:
-            raise ValueError("Se necesitan al menos dos equipos para generar partidas.")
-            
-        sorted_teams = TournamentGenerator._seed_teams(teams)
-        bracket_size, byes_count = TournamentGenerator._calculate_bracket_size(len(teams))
         
-        # El nivel inicial es el más alto (ej: para 8 equipos, size=8, log2(8)=3, nivel=2)
-        level = int(math.log2(bracket_size)) - 1 if bracket_size > 1 else 0
+        # 1. Validación de seguridad
+        if not teams or len(teams) < 2:
+             raise ValueError("Se necesitan al menos dos equipos.")
 
+        # 2. Ordenar equipos por puntaje
+        sorted_teams = TournamentGenerator._seed_teams(teams)
+        
+        # 3. Calcular tamaño (Evita math domain error con la validación paso 1)
+        bracket_size, _ = TournamentGenerator._calculate_bracket_size(len(teams))
+        
+        # 4. Calcular nivel inicial (ej. 8 equipos -> nivel 2)
+        # bracket_size siempre es potencia de 2 >= 2, así que log2 siempre es seguro
+        level = int(math.log2(bracket_size)) - 1 
+
+        # 5. Crear matches con orden visual
         matches = TournamentGenerator._create_initial_matches(
-            sorted_teams, level, byes_count, pending_status_id, completed_status_id
+            sorted_teams, level, bracket_size, pending_status_id, completed_status_id
         )
         
-        # La asignación de números de partida es crucial para el orden del bracket
+        # 6. Asignar IDs numéricos secuenciales
         ordered_matches = TournamentGenerator._assign_match_numbers(matches, level)
         
         return ordered_matches

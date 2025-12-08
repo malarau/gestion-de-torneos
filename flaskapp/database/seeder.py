@@ -16,9 +16,9 @@ from flaskapp.database.models import (
 
 # Configuración inicial
 fake = Faker('es_CL')
-NUM_USERS = 500 # Número total de usuarios a crear
+NUM_USERS = 800 # Número total de usuarios a crear
 # Para pruebas, se crean 5 administradores y el resto son usuarios normales
-NUM_ORGANIZATIONS = 7
+NUM_ORGANIZATIONS = 8
 NUM_ACTIVITIES = 5
 PASSWORD = "password1" # Contraseña común para desarrollo
 

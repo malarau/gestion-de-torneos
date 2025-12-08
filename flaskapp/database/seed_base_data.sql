@@ -54,11 +54,12 @@ DECLARE
 BEGIN
     IF NEW.is_bye AND NEW.winner_id IS NOT NULL AND NEW.level > 0 THEN
         -- Calcular siguiente match
-        SELECT CEILING(NEW.match_number / 2.0)::INTEGER INTO next_match_match_number;
+        next_match_match_number := NEW.match_number / 2;
         next_match_level := NEW.level - 1;
 
         -- Propagación inmediata
         IF MOD(NEW.match_number, 2) = 0 THEN
+            -- Es par, entonces team A
             UPDATE matches
             SET team_a_id = NEW.winner_id,
                 updated_at = NOW()
@@ -66,6 +67,7 @@ BEGIN
               AND level = next_match_level
               AND match_number = next_match_match_number;
         ELSE
+            -- Es impar, entonces team B
             UPDATE matches
             SET team_b_id = NEW.winner_id,
                 updated_at = NOW()

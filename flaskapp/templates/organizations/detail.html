@@ -121,26 +121,39 @@
       </div>
     </div>
     <div class="card-body">
-      {% if org.active_tournaments %}
-        {% for tournament in org.active_tournaments %}
-        <div class="row mb-4 {% if not loop.last %}border-bottom pb-4{% endif %}">
-          <div class="col-md-6">
-            <h5>{{ tournament.name }}</h5>
-            <p class="text-sm"><strong>Actividad:</strong> {{ tournament.activity_name }}</p>
-          </div>
-          <div class="col-md-3">
-            <p class="text-sm"><strong>Inicio:</strong> {{ tournament.start_date }}</p>
-            <p class="text-sm"><strong>Término:</strong> {{ tournament.end_date }}</p>
-          </div>
-          <div class="col-md-3">
-            <span class="badge badge-info">{{ tournament.status|replace('_', ' ')|title }}</span>
-            <p class="text-sm mt-2"><strong>Equipos:</strong> {{ tournament.team_count }}</p>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <p class="text-muted">No hay torneos activos actualmente</p>
-      {% endif %}
+        {% if org.active_tournaments %}
+            {% for tournament in org.active_tournaments %}
+            
+            <div class="row mb-4 {% if not loop.last %}border-bottom pb-4{% endif %} align-items-center position-relative"> 
+                
+                <a href="{{ url_for('tournaments_blueprint.detail', organization_id=org.id, tournament_id=tournament.id) }}" 
+                  class="stretched-link"
+                  aria-label="Ver detalles del torneo {{ tournament.name }}"></a>
+
+                <div class="col-md-5"> 
+                    <h5>{{ tournament.name }}</h5>
+                    <p class="text-sm"><strong>Actividad:</strong> {{ tournament.activity_name }}</p>
+                </div>
+                
+                <div class="col-md-3">
+                    <p class="text-sm mb-1"><strong>Inicio:</strong> {{ tournament.start_date }}</p>
+                    <p class="text-sm mb-0"><strong>Término:</strong> {{ tournament.end_date }}</p>
+                </div>
+                
+                <div class="col-md-2">
+                    <span class="badge badge-info mb-1">{{ tournament.status|replace('_', ' ')|title }}</span>
+                    <p class="text-sm mb-0"><strong>Equipos:</strong> {{ tournament.team_count }}</p>
+                </div>
+                
+                <div class="col-md-2 text-right">
+                    <i class="fas fa-chevron-right text-muted"></i>
+                </div>
+                
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">No hay torneos activos actualmente</p>
+        {% endif %}
     </div>
   </div>
 

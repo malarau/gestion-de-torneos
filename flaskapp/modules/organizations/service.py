@@ -111,7 +111,7 @@ class OrganizationService:
         ).order_by(Event.start_date.desc()).all()
 
         # Obtener torneos activos (no completados ni cancelados)
-        active_statuses = ['pending', 'in_progress', 'paused']
+        active_statuses = ['REGISTRATION_OPEN', 'IN_PROGRESS']
         active_tournaments = Tournament.query.join(
             TournamentStatus,
             Tournament.status_id == TournamentStatus.id
@@ -129,7 +129,7 @@ class OrganizationService:
             Tournament.activity_id == Activity.id
         ).filter(
             Tournament.organization_id == organization_id,
-            TournamentStatus.code == 'completed'
+            TournamentStatus.code == 'COMPLETED'
         ).order_by(Tournament.end_date.desc()).all()
 
         # Convertir a DTOs
