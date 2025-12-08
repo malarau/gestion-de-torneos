@@ -16,4 +16,7 @@ COPY . .
 EXPOSE 5000
 
 # Default command to run the app
-CMD ["python", "run.py"]
+# CMD ["python", "run.py"]
+
+# Producción con Waitress:
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=5000", "run:app"]
